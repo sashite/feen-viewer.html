@@ -1,0 +1,165 @@
+@charset "UTF-8";
+
+:root {
+  --font-size-base: 2vmin;
+  --square-size: 5vmin;
+  --accent-color: #e6f0ff;
+  --board-border: #cccccc;
+  --text-color: #333;
+}
+
+body {
+  max-width: 90vw;
+  margin: 0 auto;
+  padding: 2vmin;
+  color: var(--text-color);
+  line-height: 1.5;
+  font-size: var(--font-size-base);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--board-border);
+  margin: 3vmin 0;
+}
+
+input {
+  width: 100%;
+  padding: 1vmin;
+  border: 1px solid var(--board-border);
+  font-size: var(--font-size-base);
+  margin-bottom: 2vmin;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: var(--text-color);
+  color: white;
+  border: none;
+  padding: 1vmin 2vmin;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 2vmin auto;
+}
+
+table caption {
+  padding: 1vmin;
+  font-weight: bold;
+  font-size: calc(var(--font-size-base) * 1.2);
+}
+
+/* Ensure table doesn't grow beyond reasonable size */
+table {
+  max-width: calc(8 * var(--square-size));
+  width: 100%;
+}
+
+/* Make cells square using aspect-ratio */
+td {
+  border: 1px solid var(--board-border);
+  text-align: center;
+  aspect-ratio: 1/1;
+  position: relative;
+  padding: 0; /* Remove padding to ensure true square */
+}
+
+/* Create a responsive grid for the table */
+tr {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--square-size), 1fr));
+}
+
+/* Checkerboard pattern */
+tr:nth-child(odd) td:nth-child(even),
+tr:nth-child(even) td:nth-child(odd) {
+  background-color: var(--accent-color);
+}
+
+/* Base piece styles that apply everywhere */
+.piece {
+  font-family: monospace;
+  font-size: calc(var(--font-size-base) * 1.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific styles for pieces on the board */
+td .piece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  font-size: calc(var(--square-size) * 0.6);
+}
+
+/* Specific styles for pieces in lists */
+li .piece {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 0.5vmin;
+}
+
+.lowercase {
+  color: black;
+}
+
+.uppercase {
+  color: red;
+}
+
+/* Styling for player information */
+dl {
+  margin: 2vmin 0;
+  padding: 1vmin;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+dt {
+  font-weight: bold;
+  margin-top: 1vmin;
+}
+
+dd {
+  margin-left: 2vmin;
+}
+
+dd ul {
+  padding-left: 0;
+  margin: 0.5vmin 0;
+  list-style-type: none;
+}
+
+dd li {
+  display: inline-block;
+  margin-right: 1vmin;
+  margin-bottom: 0.5vmin;
+}
+
+/* Error styling */
+.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 1vmin;
+  border-radius: 4px;
+  margin: 2vmin 0;
+}
+
+input[name="feen"] {
+  background-image: url('favicon.svg');
+  background-repeat: no-repeat;
+  background-position: 1vmin center;
+  background-size: 2vmin 2vmin;
+  padding-left: 4vmin;
+}

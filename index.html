@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FEEN Viewer</title>
+  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="FEEN Viewer">
+  <meta name="description" content="A simple viewer for FEEN notation">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>FEEN Viewer</h1>
+    <form>
+      <input
+        type="text"
+        name="feen"
+        placeholder="e.g. rnbqk=bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK=BNR CHESS/chess -"
+        value="r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 chess/CHESS -">
+      <button type="submit">Load</button>
+    </form>
+  </header>
+
+  <hr>
+
+  <main>
+    <p>The position should be generated here.</p>
+  </main>
+
+  <hr>
+
+  <footer>
+    <p>
+      &copy; 2025 <a href="https://sashite.com" rel="external">Sashité</a>.
+      All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">code</a> and
+      <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
+      <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
+    </p>
+  </footer>
+</body>
+</html>
