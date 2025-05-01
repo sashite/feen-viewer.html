@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FEEN Viewer</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.">
+  <meta name="keywords" content="FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position">
+  <meta name="author" content="Sashité">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://sashite.github.io/feen-viewer.html/">
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="FEEN Viewer - Board Game Position Viewer">
+  <meta property="og:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sashite.github.io/feen-viewer.html/">
+  <meta property="og:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:alt" content="FEEN Viewer Logo">
+  <meta property="og:site_name" content="FEEN Viewer">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FEEN Viewer - Board Game Position Viewer">
+  <meta name="twitter:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta name="twitter:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:image:alt" content="FEEN Viewer Logo">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="favicon/web-app-manifest-192x192.png" sizes="192x192">
+  <link rel="icon" type="image/png" href="favicon/web-app-manifest-512x512.png" sizes="512x512">
+  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="FEEN Viewer">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- PWA -->
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Stylesheets -->
+  <style>
+    @charset "UTF-8";
+
+    :root {
+      --font-size-base: 2vmin;
+      --square-size: 5vmin;
+      --accent-color: #e6f0ff;
+      --board-border: #cccccc;
+      --text-color: #333;
+      --error-color: #d32f2f;
+      --error-bg: #ffebee;
+      --section-bg: #f9f9f9;
+      --border-radius: 4px;
+      --board-cols: 8; /* Default to 8 columns, will be overridden by JavaScript */
+    }
+
+    body {
+      max-width: 90vw;
+      margin: 0 auto;
+      padding: 2vmin;
+      color: var(--text-color);
+      line-height: 1.5;
+      font-size: var(--font-size-base);
+    }
+
+    /* Header styles */
+    header h1 {
+      margin-bottom: 0.5vmin;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--board-border);
+      margin: 3vmin 0;
+    }
+
+    /* Form styles */
+    form {
+      margin-bottom: 2vmin;
+    }
+
+    input {
+      width: 100%;
+      padding: 1vmin;
+      border: 1px solid var(--board-border);
+      border-radius: var(--border-radius);
+      font-size: var(--font-size-base);
+      margin-bottom: 1vmin;
+      box-sizing: border-box;
+      padding-left: 1vmin;
+    }
+
+    input:focus {
+      outline: 2px solid var(--accent-color);
+      border-color: #999;
+    }
+
+    /* Accessibility - visually hidden but available to screen readers */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    small {
+      display: block;
+      font-size: calc(var(--font-size-base) * 0.8);
+      color: #666;
+      margin-bottom: 1vmin;
+    }
+
+    button {
+      background-color: var(--text-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 1vmin 2vmin;
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      transition: opacity 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    /* Board styles */
+    table {
+      border-collapse: collapse;
+      margin: 2vmin auto;
+      max-width: calc(var(--board-cols) * var(--square-size));
+      width: 100%;
+    }
+
+    table caption {
+      padding: 1vmin;
+      font-weight: bold;
+      font-size: calc(var(--font-size-base) * 1.2);
+    }
+
+    /* Make cells square using aspect-ratio */
+    td {
+      border: 1px solid var(--board-border);
+      text-align: center;
+      aspect-ratio: 1/1;
+      position: relative;
+      padding: 0;
+      width: calc(100% / var(--board-cols));
+      min-width: var(--square-size);
+      min-height: var(--square-size);
+    }
+
+    /* Create a responsive grid for the table using the calculated column count */
+    tr {
+      display: grid;
+      grid-template-columns: repeat(var(--board-cols), 1fr);
+    }
+
+    /* Checkerboard pattern */
+    tr:nth-child(odd) td:nth-child(even),
+    tr:nth-child(even) td:nth-child(odd) {
+      background-color: var(--accent-color);
+    }
+
+    /* Base piece styles that apply everywhere */
+    .piece {
+      font-family: monospace;
+      font-size: calc(var(--font-size-base) * 1.5);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    /* Specific styles for pieces on the board */
+    td .piece {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      font-size: calc(var(--square-size) * 0.6);
+    }
+
+    /* Specific styles for pieces in lists */
+    li .piece {
+      display: inline-flex;
+      vertical-align: middle;
+      margin-right: 0.5vmin;
+    }
+
+    /* Piece colors */
+    .lowercase {
+      color: black;
+    }
+
+    .uppercase {
+      color: red;
+    }
+
+    /* Player information styling */
+    dl {
+      margin: 2vmin 0;
+      padding: 1.5vmin;
+      background-color: var(--section-bg);
+      border-radius: var(--border-radius);
+      border: 1px solid #e0e0e0;
+    }
+
+    dt {
+      font-weight: bold;
+      margin-top: 1vmin;
+      font-size: calc(var(--font-size-base) * 0.95);
+    }
+
+    dt:first-child {
+      margin-top: 0;
+    }
+
+    dd {
+      margin-left: 0;
+      margin-bottom: 1vmin;
+      padding-left: 1vmin;
+      border-left: 3px solid var(--accent-color);
+    }
+
+    dd:last-child {
+      margin-bottom: 0;
+    }
+
+    dd ul {
+      padding-left: 0;
+      margin: 0.5vmin 0;
+      list-style-type: none;
+    }
+
+    dd li {
+      display: inline-block;
+      margin-right: 1vmin;
+      margin-bottom: 0.5vmin;
+      padding: 0.3vmin 0.6vmin;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: calc(var(--border-radius) / 2);
+    }
+
+    /* Footer sections */
+    footer {
+      margin-top: 4vmin;
+    }
+
+    footer section {
+      margin-bottom: 2vmin;
+    }
+
+    footer section h2 {
+      font-size: calc(var(--font-size-base) * 1.1);
+      margin-bottom: 1vmin;
+      color: var(--text-color);
+    }
+
+    footer section p {
+      margin-bottom: 1vmin;
+      line-height: 1.6;
+    }
+
+    footer section:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Links */
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 1px;
+    }
+
+    a[rel="external"]::after {
+      content: " ↗";
+      font-size: 0.8em;
+      opacity: 0.7;
+    }
+
+    /* Error styling */
+    .error {
+      color: var(--error-color);
+      background-color: var(--error-bg);
+      padding: 1.5vmin;
+      border-radius: var(--border-radius);
+      border: 1px solid #ffcdd2;
+      margin: 2vmin 0;
+    }
+
+    .error p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      :root {
+        --font-size-base: 3vmin;
+        --square-size: 6vmin;
+      }
+
+      body {
+        max-width: 95vw;
+        padding: 1.5vmin;
+      }
+
+      dd {
+        padding-left: 0.5vmin;
+        border-left-width: 2px;
+      }
+
+      input {
+        padding-left: 1vmin;
+      }
+
+      /* Adjust board size for mobile */
+      table {
+        max-width: calc(var(--board-cols) * var(--square-size));
+      }
+
+      td {
+        min-width: calc(var(--square-size) * 0.8);
+        min-height: calc(var(--square-size) * 0.8);
+      }
+    }
+
+    @media (min-width: 1200px) {
+      :root {
+        --font-size-base: 18px;
+        --square-size: 50px;
+      }
+
+      body {
+        max-width: 1000px;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      header form,
+      footer,
+      hr {
+        display: none;
+      }
+
+      body {
+        max-width: 100%;
+        padding: 0;
+        font-size: 12pt;
+      }
+
+      table {
+        margin: 0;
+      }
+
+      .piece {
+        color: black !important;
+      }
+    }
+  </style>
+
+  <!-- Scripts -->
+  <script>
+    // FEEN Viewer - A simple viewer for FEEN notation
+    // Implements the FEEN specification version 1.0.0 using PIN-style piece tokens
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.querySelector('form');
+      const main = document.querySelector('main');
+
+      // Parse initial FEEN from input field on page load
+      displayPosition(document.querySelector('input[name="feen"]').value);
+
+      // Handle form submission
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const feenInput = form.querySelector('input[name="feen"]').value;
+        displayPosition(feenInput);
+      });
+
+      /**
+       * Main function to parse FEEN and display the position
+       * @param {string} feenString - The FEEN notation string
+       */
+      function displayPosition(feenString) {
+        try {
+          // Clear previous content
+          main.innerHTML = '';
+
+          // Parse FEEN string
+          const { piecePlacement, piecesInHand, styleTurn } = parseFeen(feenString);
+
+          // Analyze style turn to determine which player is active and the style variants
+          const { activePlayer, firstPlayerStyle, secondPlayerStyle } = analyzeStyleTurn(styleTurn);
+
+          // Categorize pieces in hand by player
+          const { firstPlayerPieces, secondPlayerPieces } = categorizePiecesInHand(piecesInHand);
+
+          // Create HTML representation
+          // First player pieces (left side of /) always go with firstPlayerStyle (uppercase style)
+          // Second player pieces (right side of /) always go with secondPlayerStyle (lowercase style)
+          const firstPlayerDL = createPlayerDL(firstPlayerStyle, firstPlayerPieces, true);
+          const secondPlayerDL = createPlayerDL(secondPlayerStyle, secondPlayerPieces, false);
+          const boardTable = createBoardTable(piecePlacement, activePlayer, firstPlayerStyle);
+
+          // Determine which player is active and display according to chess convention:
+          // - Inactive player at top (opponent's side)
+          // - Active player at bottom (our side)
+          const isFirstPlayerActive = activePlayer === firstPlayerStyle;
+          const activePlayerDL = isFirstPlayerActive ? firstPlayerDL : secondPlayerDL;
+          const inactivePlayerDL = isFirstPlayerActive ? secondPlayerDL : firstPlayerDL;
+
+          // Append to main - inactive player at top, active player at bottom (chess convention)
+          main.appendChild(inactivePlayerDL);
+          main.appendChild(boardTable);
+          main.appendChild(activePlayerDL);
+        } catch (error) {
+          // Display error message
+          main.innerHTML = `<div class="error"><p>Error: ${error.message}</p></div>`;
+        }
+      }
+
+      /**
+       * Parses a FEEN string into its three components
+       * @param {string} feenString - The FEEN notation string
+       * @returns {Object} The parsed components
+       */
+      function parseFeen(feenString) {
+        if (!feenString || typeof feenString !== 'string') {
+          throw new Error('Invalid FEEN: must be a non-empty string');
+        }
+
+        const trimmed = feenString.trim();
+        if (!trimmed) {
+          throw new Error('Invalid FEEN: must be a non-empty string');
+        }
+
+        const parts = trimmed.split(' ');
+
+        if (parts.length !== 3) {
+          throw new Error('Invalid FEEN format: must contain exactly three space-separated fields');
+        }
+
+        const [piecePlacement, piecesInHand, styleTurn] = parts;
+
+        // Validate each field is non-empty
+        if (!piecePlacement) {
+          throw new Error('Invalid FEEN: piece placement field cannot be empty');
+        }
+        if (!piecesInHand) {
+          throw new Error('Invalid FEEN: pieces in hand (hands) field cannot be empty');
+        }
+        if (!styleTurn) {
+          throw new Error('Invalid FEEN: style–turn field cannot be empty');
+        }
+
+        return { piecePlacement, piecesInHand, styleTurn };
+      }
+
+      /**
+       * Analyzes the style turn field according to FEEN specification
+       * @param {string} styleTurn - The style turn field from FEEN
+       * @returns {Object} Information about the styles and active player
+       */
+      function analyzeStyleTurn(styleTurn) {
+        if (!styleTurn || typeof styleTurn !== 'string') {
+          throw new Error('Invalid style turn: must be a non-empty string');
+        }
+
+        const parts = styleTurn.split('/');
+
+        if (parts.length !== 2) {
+          throw new Error('Invalid style turn format: must contain exactly two styles separated by "/"');
+        }
+
+        const [firstStyle, secondStyle] = parts;
+
+        // Validate that both styles are non-empty
+        if (!firstStyle || !secondStyle) {
+          throw new Error('Invalid style turn: both styles must be non-empty');
+        }
+
+        // Validate style format according to SIN specification
+        const stylePattern = /^[A-Za-z][A-Za-z0-9]*$/;
+        if (!stylePattern.test(firstStyle) || !stylePattern.test(secondStyle)) {
+          throw new Error('Invalid style format: styles must start with a letter and contain only letters and digits');
+        }
+
+        // Validate case: one must be uppercase, one must be lowercase
+        const isFirstUppercase = /^[A-Z][A-Z0-9]*$/.test(firstStyle);
+        const isSecondUppercase = /^[A-Z][A-Z0-9]*$/.test(secondStyle);
+        const isFirstLowercase = /^[a-z][a-z0-9]*$/.test(firstStyle);
+        const isSecondLowercase = /^[a-z][a-z0-9]*$/.test(secondStyle);
+
+        if ((isFirstUppercase && isSecondUppercase) || (isFirstLowercase && isSecondLowercase)) {
+          throw new Error('Invalid style turn format: one style must be uppercase and one lowercase');
+        }
+
+        if ((!isFirstUppercase && !isFirstLowercase) || (!isSecondUppercase && !isSecondLowercase)) {
+          throw new Error('Invalid style format: styles must be entirely uppercase or entirely lowercase');
+        }
+
+        // The first style is always the active player (player to move)
+        const activePlayer = firstStyle;
+
+        // Determine which player corresponds to uppercase/lowercase styles
+        // First player ALWAYS has uppercase style, second player ALWAYS has lowercase style
+        const firstPlayerStyle = isFirstUppercase ? firstStyle : secondStyle;   // uppercase style (first player)
+        const secondPlayerStyle = isFirstLowercase ? firstStyle : secondStyle;  // lowercase style (second player)
+
+        return { activePlayer, firstPlayerStyle, secondPlayerStyle };
+      }
+
+      /**
+       * Categorizes pieces in hand by player according to FEEN specification
+       * @param {string} piecesInHand - The pieces in hand (hands) field from FEEN
+       * @returns {Object} Pieces categorized by player
+       */
+      function categorizePiecesInHand(piecesInHand) {
+        if (!piecesInHand || typeof piecesInHand !== 'string') {
+          throw new Error('Invalid pieces in hand: must be a string');
+        }
+
+        // Check for separator
+        if (!piecesInHand.includes('/')) {
+          throw new Error('Invalid pieces in hand format: must contain "/" separator');
+        }
+
+        const parts = piecesInHand.split('/');
+        if (parts.length !== 2) {
+          throw new Error('Invalid pieces in hand format: must have exactly two parts separated by "/"');
+        }
+
+        const [firstPlayerPiecesStr, secondPlayerPiecesStr] = parts;
+
+        // Left side of "/" = first player's hand, right side = second player's hand
+        const firstPlayerPieces = parsePiecesInHandSection(firstPlayerPiecesStr, 'first');
+        const secondPlayerPieces = parsePiecesInHandSection(secondPlayerPiecesStr, 'second');
+
+        return { firstPlayerPieces, secondPlayerPieces };
+      }
+
+      /**
+       * Parses a single section of the pieces in hand field
+       * Supports PIN-style terminal marker '^' and legacy derivation marker "'".
+       * @param {string} section - The section to parse
+       * @param {string} playerType - 'first' or 'second' for error messages
+       * @returns {Array} Array of piece objects with count and identifier
+       */
+      function parsePiecesInHandSection(section, playerType) {
+        if (section === '') {
+          return [];
+        }
+
+        const pieces = [];
+        let i = 0;
+
+        while (i < section.length) {
+          let count = 1;
+
+          // Check for numeric prefix (2-9 or multi-digit starting with 1-9)
+          if (/[2-9]/.test(section[i])) {
+            const numStart = i;
+            while (i < section.length && /[0-9]/.test(section[i])) {
+              i++;
+            }
+            count = parseInt(section.slice(numStart, i), 10);
+
+            // Validate count is not 0 or 1 when explicitly stated
+            if (count <= 1) {
+              throw new Error(`Invalid pieces in hand: count "${count}" not allowed (must be 2 or greater when specified)`);
+            }
+          }
+
+          // Get the piece identifier (PIN-style with optional state and terminal marker)
+          if (i >= section.length) {
+            throw new Error('Invalid pieces in hand: count without piece identifier');
+          }
+
+          const pieceStart = i;
+          let prefix = '';
+          let suffix = '';
+          let piece = '';
+
+          // Check for suffixes: PIN terminal marker '^' then optional EPIN derivation marker "'"
+          let terminalMarker = "";
+          let derivationMarker = "";
+
+          // First, optional terminal marker '^'
+          if (i < section.length && section[i] === "^") {
+            terminalMarker = "^";
+            i++;
+          }
+
+          // Then, optional derivation marker "'"
+          if (i < section.length && section[i] === "'") {
+            derivationMarker = "'";
+            i++;
+          }
+
+          // Build complete EPIN identifier: [state][letter][^][']
+          const fullPiece = prefix + piece + terminalMarker + derivationMarker;
+
+          pieces.push({ piece: fullPiece, count });
+        }
+
+        // Validate sorting according to FEEN specification
+        validatePiecesInHandSorting(pieces);
+
+        return pieces;
+      }
+
+      /**
+       * Validates that pieces in hand are sorted according to FEEN specification
+       * @param {Array} pieces - Array of piece objects to validate
+       */
+      function validatePiecesInHandSorting(pieces) {
+        for (let i = 1; i < pieces.length; i++) {
+          const prev = pieces[i - 1];
+          const curr = pieces[i];
+
+          // Extract base letter for comparison (ignoring modifiers and terminal markers)
+          const prevBase = prev.piece.replace(/[+\-'^]/g, '');
+          const currBase = curr.piece.replace(/[+\-'^]/g, '');
+
+          // Rule 1: Sort by count (descending)
+          if (prev.count < curr.count) {
+            throw new Error('Pieces in hand not sorted by count (descending)');
+          }
+
+          // Rule 2: Within same count, sort by base letter (ascending, case-insensitive)
+          if (prev.count === curr.count) {
+            const prevLower = prevBase.toLowerCase();
+            const currLower = currBase.toLowerCase();
+
+            if (prevLower > currLower) {
+              throw new Error('Pieces in hand not sorted alphabetically within same count');
+            }
+
+            // Rule 3: Same base letter, uppercase before lowercase
+            if (prevLower === currLower && prevBase.toLowerCase() === currBase.toLowerCase()) {
+              if (prevBase > currBase) {
+                throw new Error('Pieces in hand not sorted by case (uppercase first) within same letter');
+              }
+            }
+          }
+        }
+      }
+
+      /**
+       * Creates a definition list for a player
+       * @param {string} style - The style name
+       * @param {Array} pieces - The pieces in hand for this player
+       * @param {boolean} isFirstPlayer - Whether this is the first player
+       * @returns {HTMLElement} The definition list
+       */
+      function createPlayerDL(style, pieces, isFirstPlayer) {
+        const dl = document.createElement('dl');
+
+        const styleDt = document.createElement('dt');
+        styleDt.textContent = 'Style';
+
+        const styleDd = document.createElement('dd');
+        styleDd.textContent = style;
+
+        const piecesDt = document.createElement('dt');
+        piecesDt.textContent = 'Pieces in hand';
+
+        const piecesDd = document.createElement('dd');
+
+        if (pieces.length === 0) {
+          piecesDd.textContent = 'None';
+        } else {
+          const ul = document.createElement('ul');
+
+          for (const { piece, count } of pieces) {
+            const li = document.createElement('li');
+
+            // Create a span with class 'piece' for consistency with board pieces
+            const pieceSpan = document.createElement('span');
+            pieceSpan.className = 'piece';
+
+            // Display count prefix if > 1
+            const displayText = count > 1 ? `${count}${piece}` : piece;
+            pieceSpan.textContent = displayText;
+
+            // Determine piece ownership based on controlling player (not piece case)
+            if (isFirstPlayer) {
+              pieceSpan.classList.add('uppercase');
+            } else {
+              pieceSpan.classList.add('lowercase');
+            }
+
+            li.appendChild(pieceSpan);
+            ul.appendChild(li);
+          }
+
+          piecesDd.appendChild(ul);
+        }
+
+        dl.appendChild(styleDt);
+        dl.appendChild(styleDd);
+        dl.appendChild(piecesDt);
+        dl.appendChild(piecesDd);
+
+        return dl;
+      }
+
+      /**
+       * Creates a board table from the piece placement field
+       * Supports 1D and 2D boards only.
+       * @param {string} piecePlacement - The piece placement field from FEEN
+       * @param {string} activePlayer - The active player's style
+       * @param {string} firstPlayerStyle - The first player's style (uppercase)
+       * @returns {HTMLElement} The board table
+       */
+      function createBoardTable(piecePlacement, activePlayer, firstPlayerStyle) {
+        if (!piecePlacement || typeof piecePlacement !== 'string') {
+          throw new Error('Invalid piece placement: must be a non-empty string');
+        }
+
+        // Check if this is a multi-dimensional board beyond 2D
+        if (piecePlacement.includes('//')) {
+          throw new Error('Only 1D and 2D boards are supported in this viewer');
+        }
+
+        // Parse the board rows/ranks
+        const rows = piecePlacement.split('/');
+
+        if (rows.length === 0) {
+          throw new Error('Invalid piece placement: no ranks found');
+        }
+
+        // Determine if we need to flip the board (when second player is active)
+        const shouldFlipBoard = activePlayer !== firstPlayerStyle;
+
+        // Create the table
+        const table = document.createElement('table');
+
+        // Add caption indicating the active player
+        const caption = document.createElement('caption');
+        caption.textContent = `${activePlayer}'s turn`;
+        table.appendChild(caption);
+
+        // Determine maximum row width for consistent grid
+        let maxCells = 0;
+        const parsedRows = [];
+
+        // First pass: parse all rows and determine dimensions
+        for (let i = 0; i < rows.length; i++) {
+          const parsedCells = parseRank(rows[i]);
+          parsedRows.push(parsedCells);
+          maxCells = Math.max(maxCells, parsedCells.length);
+        }
+
+        // If we need to flip the board, reverse the rows order
+        const displayRows = shouldFlipBoard ? [...parsedRows].reverse() : parsedRows;
+
+        // Second pass: create the table with consistent grid
+        for (let i = 0; i < displayRows.length; i++) {
+          const tr = document.createElement('tr');
+          tr.style.gridTemplateColumns = `repeat(${maxCells}, 1fr)`;
+
+          const cells = displayRows[i];
+
+          // If we need to flip the board, also reverse each row
+          const displayCells = shouldFlipBoard ? [...cells].reverse() : cells;
+
+          // Add cells for this row
+          for (let j = 0; j < displayCells.length; j++) {
+            const td = document.createElement('td');
+
+            if (displayCells[j] !== null) {
+              // Create the piece element
+              const pieceElement = document.createElement('span');
+              pieceElement.className = 'piece';
+
+              // Extract base letter for case determination (after removing modifiers and terminal marker)
+              const baseLetter = displayCells[j].replace(/[+\-'^]/g, '');
+
+              // Add uppercase or lowercase class based on the piece's case
+              if (baseLetter === baseLetter.toUpperCase()) {
+                pieceElement.classList.add('uppercase');
+              } else {
+                pieceElement.classList.add('lowercase');
+              }
+
+              pieceElement.textContent = displayCells[j];
+              td.appendChild(pieceElement);
+            }
+
+            tr.appendChild(td);
+          }
+
+          // Fill remaining cells if this row is shorter than maxCells
+          for (let j = displayCells.length; j < maxCells; j++) {
+            const td = document.createElement('td');
+            tr.appendChild(td);
+          }
+
+          table.appendChild(tr);
+        }
+
+        return table;
+      }
+
+      /**
+       * Parses a single rank/row string into an array of pieces/nulls
+       * Supports PIN-style '^' terminal marker and legacy "'".
+       * @param {string} rankStr - The rank string to parse
+       * @returns {Array} Array where each element is either a piece string or null (empty)
+       */
+      function parseRank(rankStr) {
+        const cells = [];
+        let i = 0;
+
+        while (i < rankStr.length) {
+          const char = rankStr[i];
+
+          // If it's a number, add that many empty cells
+          if (/[1-9]/.test(char)) {
+            // Handle multi-digit numbers
+            let numStart = i;
+            while (i < rankStr.length && /[0-9]/.test(rankStr[i])) {
+              i++;
+            }
+            const emptyCount = parseInt(rankStr.slice(numStart, i), 10);
+
+            for (let k = 0; k < emptyCount; k++) {
+              cells.push(null);
+            }
+
+            continue;
+          }
+
+          // Handle piece with potential modifiers and terminal marker (PIN-style)
+          let pieceStr = '';
+
+          // Check for prefix
+          if (char === '+' || char === '-') {
+            pieceStr += char;
+            i++;
+
+            if (i >= rankStr.length || !/[a-zA-Z]/.test(rankStr[i])) {
+              throw new Error(`Invalid piece notation: prefix "${char}" without piece identifier`);
+            }
+          }
+
+          // Get the piece identifier
+          if (i >= rankStr.length || !/[a-zA-Z]/.test(rankStr[i])) {
+            throw new Error(`Invalid piece placement: expected piece letter at position ${i}`);
+          }
+
+          pieceStr += rankStr[i];
+          i++;
+
+          // Check for suffixes: optional PIN terminal '^' then optional EPIN derivation "'"
+          if (i < rankStr.length && rankStr[i] === "^") {
+            pieceStr += "^";
+            i++;
+          }
+
+          if (i < rankStr.length && rankStr[i] === "'") {
+            pieceStr += "'";
+            i++;
+          }
+
+          cells.push(pieceStr);
+        }
+
+        return cells;
+      }
+    });
+  </script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "FEEN Viewer",
+    "alternateName": "Field Expression Encoding Notation Viewer",
+    "description": "Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.",
+    "url": "https://sashite.github.io/feen-viewer.html/",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Web Browser",
+    "browserRequirements": "Requires JavaScript",
+    "softwareVersion": "1.0.0",
+    "dateCreated": "2025-06-09",
+    "creator": {
+      "@type": "Organization",
+      "name": "Sashité",
+      "url": "https://sashite.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Sashité",
+      "url": "https://sashite.com"
+    },
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": "JavaScript",
+    "screenshot": "https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "FEEN notation parsing and validation",
+      "PIN-style piece token support with terminal markers",
+      "Visual board representation",
+      "Support for Chess, Shōgi, Xiangqi positions",
+      "Cross-style hybrid position support",
+      "Captured pieces display",
+      "Multi-dimensional board parsing (up to 2D in this viewer)",
+      "Responsive design",
+      "Real-time position updates"
+    ],
+    "keywords": "FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position",
+    "inLanguage": "en",
+    "isAccessibleForFree": true,
+    "mainEntity": {
+      "@type": "SoftwareApplication",
+      "name": "FEEN Position Viewer",
+      "applicationCategory": "Utility",
+      "description": "Parse and visualize board game positions in FEEN format"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>FEEN Viewer</h1>
+    <form>
+      <label for="feen-input" class="visually-hidden">Enter FEEN notation string</label>
+      <input
+        id="feen-input"
+        type="text"
+        name="feen"
+        placeholder="e.g. +rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c"
+        value="+rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c"
+        aria-describedby="feen-help">
+      <small id="feen-help">Enter a valid FEEN notation string to visualize the board position</small>
+      <button type="submit">Load Position</button>
+    </form>
+  </header>
+
+  <hr>
+
+  <main>
+    <p>The position should be generated here.</p>
+  </main>
+
+  <hr>
+
+  <footer>
+    <section class="about">
+      <h2>About FEEN</h2>
+      <p>
+        FEEN (Field Expression Encoding Notation) is a minimalistic, rule-agnostic textual format
+        for capturing static board positions in a canonical, compact, and game-neutral way.
+      </p>
+      <p>
+        FEEN strings consist of three space-separated fields:
+        <strong>&lt;PIECE-PLACEMENT&gt;</strong> (board configuration),
+        <strong>&lt;HANDS&gt;</strong> (pieces in each player's hand), and
+        <strong>&lt;STYLE-TURN&gt;</strong> (styles and active player).
+        Piece identifiers follow PIN-style conventions, with optional state modifiers (<code>+</code>, <code>-</code>)
+        and optional terminal markers (<code>^</code>).
+      </p>
+      <p>
+        Learn more about the <a href="https://sashite.dev/specs/feen/1.0.0/" rel="external">FEEN Specification</a>.
+      </p>
+    </section>
+
+    <section class="examples">
+      <h2>Example FEEN Strings</h2>
+      <dl>
+        <dt>Chess Starting Position</dt>
+        <dd><code>+rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c</code></dd>
+
+        <dt>Shōgi Starting Position</dt>
+        <dd><code>lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / S/s</code></dd>
+
+        <dt>Cross-Style Game (Chess vs Makruk)</dt>
+        <dd><code>rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/m</code></dd>
+
+        <dt>Irregular Board Shape</dt>
+        <dd><code>rk^r/pp/PPPP / G/g</code></dd>
+
+        <dt>1D Chess Board (size 8) Starting Position</dt>
+        <dd><code>k^+p4+PK^ / C/c</code></dd>
+      </dl>
+    </section>
+
+    <section class="legal">
+      <p>
+        &copy; 2025 <a href="https://sashite.com" rel="external">Sashité</a>.
+        All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">source code</a> and
+        <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
+        <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
+      </p>
+    </section>
+  </footer>
+</body>
+</html>

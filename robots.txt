@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://sashite.github.io/feen-viewer.html/sitemap.xml
+
+# Optional: Block access to specific files/directories if needed
+# Disallow: /favicon/
+# Disallow: /.git/
+
+# Crawl-delay (optional, in seconds)
+# Crawl-delay: 1

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>FEEN</title>
+  <rect x="-7.1054e-15" width="1024" height="1024" style="paint-order:markers stroke fill"/>
+  <g transform="matrix(1 0 0 .963 35.898 20.366)" fill="#fff" stroke-width="0">
+    <rect x="67.335" y="36.728" width="431.55" height="104.06" style="paint-order:markers stroke fill"/>
+    <rect x="70.395" y="206.14" width="342.8" height="89.663" style="paint-order:markers stroke fill"/>
+    <rect x="67.335" y="36.728" width="137.73" height="428.49" style="paint-order:markers stroke fill"/>
+  </g>
+  <g transform="matrix(-1 0 0 1 650.45 63.272)" fill="#fff" stroke-width="0">
+    <rect transform="scale(-1,1)" x="-549.12" y="471.92" width="146.91" height="422.37" style="paint-order:markers stroke fill"/>
+    <rect transform="scale(-1,1)" x="-549.12" y="471.92" width="327.49" height="76.517" style="paint-order:markers stroke fill"/>
+    <rect transform="scale(-1,1)" x="-549.12" y="643.33" width="290.76" height="79.578" style="paint-order:markers stroke fill"/>
+    <rect transform="scale(-1,1)" x="-484.85" y="799.42" width="315.25" height="94.881" style="paint-order:markers stroke fill"/>
+  </g>
+  <g transform="matrix(.91624 0 0 1 65.098 -12.429)" fill="#fff" stroke-width="0">
+    <rect transform="rotate(231.33)" x="-1259.5" y="77.418" width="370.34" height="85.699" style="paint-order:markers stroke fill"/>
+    <rect x="560.1" y="557.04" width="128.55" height="413.19" style="paint-order:markers stroke fill"/>
+    <rect x="841.69" y="557.04" width="128.55" height="413.19" style="paint-order:markers stroke fill"/>
+  </g>
+  <g transform="translate(507.4 -488.49)" fill="#fff" stroke-width="0">
+    <rect x="78.348" y="544.7" width="146.91" height="422.37" style="paint-order:markers stroke fill"/>
+    <rect x="78.348" y="544.7" width="327.49" height="76.517" style="paint-order:markers stroke fill"/>
+    <rect x="78.348" y="716.1" width="290.76" height="79.578" style="paint-order:markers stroke fill"/>
+    <rect x="142.62" y="872.19" width="315.25" height="94.881" style="paint-order:markers stroke fill"/>
+  </g>
+</svg>
