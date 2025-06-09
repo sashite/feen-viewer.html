@@ -3,27 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FEEN Viewer</title>
-  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>FEEN Viewer - Forsyth–Edwards Enhanced Notation Board Game Viewer</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-game hybrid positions.">
+  <meta name="keywords" content="FEEN, Forsyth Edwards Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, chess position">
+  <meta name="author" content="Sashité">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://sashite.github.io/feen-viewer.html/">
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="FEEN Viewer - Board Game Position Viewer">
+  <meta property="og:description" content="Interactive web viewer for FEEN notation. Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sashite.github.io/feen-viewer.html/">
+  <meta property="og:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:alt" content="FEEN Viewer Logo">
+  <meta property="og:site_name" content="FEEN Viewer">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FEEN Viewer - Board Game Position Viewer">
+  <meta name="twitter:description" content="Interactive web viewer for FEEN notation. Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta name="twitter:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:image:alt" content="FEEN Viewer Logo">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="favicon/web-app-manifest-192x192.png" sizes="192x192">
+  <link rel="icon" type="image/png" href="favicon/web-app-manifest-512x512.png" sizes="512x512">
+  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
   <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="FEEN Viewer">
-  <meta name="description" content="A simple viewer for FEEN notation">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- PWA -->
   <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Scripts -->
   <script src="app.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "FEEN Viewer",
+    "alternateName": "Forsyth–Edwards Enhanced Notation Viewer",
+    "description": "Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-game hybrid positions.",
+    "url": "https://sashite.github.io/feen-viewer.html/",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Web Browser",
+    "browserRequirements": "Requires JavaScript",
+    "softwareVersion": "1.0.0",
+    "dateCreated": "2025-06-09",
+    "dateModified": "2025-06-09",
+    "creator": {
+      "@type": "Organization",
+      "name": "Sashité",
+      "url": "https://sashite.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Sashité",
+      "url": "https://sashite.com"
+    },
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": "JavaScript",
+    "screenshot": "https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "FEEN notation parsing and validation",
+      "Visual board representation",
+      "Support for Chess, Shōgi, Xiangqi positions",
+      "Cross-game hybrid position support",
+      "Responsive design",
+      "Real-time position updates"
+    ],
+    "keywords": "FEEN, Forsyth Edwards Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation",
+    "inLanguage": "en",
+    "isAccessibleForFree": true,
+    "mainEntity": {
+      "@type": "SoftwareApplication",
+      "name": "FEEN Position Viewer",
+      "applicationCategory": "Utility",
+      "description": "Parse and visualize board game positions in FEEN format"
+    }
+  }
+  </script>
 </head>
 <body>
   <header>
     <h1>FEEN Viewer</h1>
+    <p class="subtitle">Forsyth–Edwards Enhanced Notation Board Game Position Viewer</p>
     <form>
+      <label for="feen-input" class="visually-hidden">Enter FEEN notation string</label>
       <input
+        id="feen-input"
         type="text"
         name="feen"
-        placeholder="e.g. rnbqk=bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK=BNR CHESS/chess -"
-        value="r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 chess/CHESS -">
-      <button type="submit">Load</button>
+        placeholder="e.g. rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR / CHESS/chess"
+        value="r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 / chess/CHESS"
+        aria-describedby="feen-help">
+      <small id="feen-help">Enter a valid FEEN notation string to visualize the board position</small>
+      <button type="submit">Load Position</button>
     </form>
   </header>
 
@@ -36,12 +130,26 @@
   <hr>
 
   <footer>
-    <p>
-      &copy; 2025 <a href="https://sashite.com" rel="external">Sashité</a>.
-      All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">code</a> and
-      <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
-      <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
-    </p>
+    <section class="about">
+      <h2>About FEEN</h2>
+      <p>
+        FEEN (Forsyth–Edwards Enhanced Notation) is a compact, canonical, and rule-agnostic textual format
+        for representing static board positions in two-player piece-placement games. It extends traditional
+        FEN notation to support cross-game scenarios, arbitrary board dimensions, and captured pieces management.
+      </p>
+      <p>
+        Learn more about the <a href="https://sashite.dev/documents/feen/1.0.0/" rel="external">FEEN Specification</a>.
+      </p>
+    </section>
+
+    <section class="legal">
+      <p>
+        &copy; 2025 <a href="https://sashite.com" rel="external">Sashité</a>.
+        All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">source code</a> and
+        <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
+        <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
+      </p>
+    </section>
   </footer>
 </body>
 </html>

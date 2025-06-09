@@ -25,23 +25,23 @@ document.addEventListener('DOMContentLoaded', () => {
       main.innerHTML = '';
 
       // Parse FEEN string
-      const { piecePlacement, gamesTurn, piecesInHand } = parseFeen(feenString);
+      const { piecePlacement, piecesInHand, gamesTurn } = parseFeen(feenString);
 
       // Analyze games turn to determine which player is active and the game variants
-      const { activePlayer, northPlayer, southPlayer } = analyzeGamesTurn(gamesTurn);
+      const { activePlayer, firstPlayer, secondPlayer } = analyzeGamesTurn(gamesTurn);
 
       // Categorize pieces in hand by player
-      const { northPieces, southPieces } = categorizePiecesInHand(piecesInHand, gamesTurn);
+      const { firstPlayerPieces, secondPlayerPieces } = categorizePiecesInHand(piecesInHand);
 
       // Create HTML representation
-      const northDL = createPlayerDL(northPlayer, northPieces);
-      const southDL = createPlayerDL(southPlayer, southPieces);
+      const firstPlayerDL = createPlayerDL(firstPlayer, firstPlayerPieces);
+      const secondPlayerDL = createPlayerDL(secondPlayer, secondPlayerPieces);
       const boardTable = createBoardTable(piecePlacement, activePlayer);
 
-      // Append to main
-      main.appendChild(northDL);
+      // Append to main - first player (uppercase pieces) at top
+      main.appendChild(firstPlayerDL);
       main.appendChild(boardTable);
-      main.appendChild(southDL);
+      main.appendChild(secondPlayerDL);
     } catch (error) {
       // Display error message
       main.innerHTML = `<div class="error"><p>Error: ${error.message}</p></div>`;
@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Invalid FEEN format: must contain three space-separated fields');
     }
 
-    const [piecePlacement, gamesTurn, piecesInHand] = parts;
+    const [piecePlacement, piecesInHand, gamesTurn] = parts;
 
-    return { piecePlacement, gamesTurn, piecesInHand };
+    return { piecePlacement, piecesInHand, gamesTurn };
   }
 
   /**
@@ -102,48 +102,110 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Invalid games turn format: one variant must be uppercase and one lowercase');
     }
 
-    // Determine the active player and game variants
+    // The first variant is always the player to move
     const activePlayer = firstVariant;
-    const northPlayer = isSecondLowercase ? secondVariant : firstVariant;
-    const southPlayer = isFirstUppercase ? firstVariant : secondVariant;
 
-    return { activePlayer, northPlayer, southPlayer };
+    // Determine which player corresponds to uppercase/lowercase pieces
+    const firstPlayer = isFirstUppercase ? firstVariant : secondVariant;  // uppercase game
+    const secondPlayer = isFirstLowercase ? firstVariant : secondVariant; // lowercase game
+
+    return { activePlayer, firstPlayer, secondPlayer };
   }
 
   /**
-   * Categorizes pieces in hand by player
+   * Categorizes pieces in hand by player according to FEEN specification
    * @param {string} piecesInHand - The pieces in hand field from FEEN
-   * @param {string} gamesTurn - The games turn field from FEEN
    * @returns {Object} Pieces categorized by player
    */
-  function categorizePiecesInHand(piecesInHand, gamesTurn) {
-    if (piecesInHand === '-') {
-      return { northPieces: [], southPieces: [] };
-    }
-
+  function categorizePiecesInHand(piecesInHand) {
     if (!piecesInHand || typeof piecesInHand !== 'string') {
       throw new Error('Invalid pieces in hand: must be a string');
     }
 
-    const parts = gamesTurn.split('/');
-    const uppercaseVariant = /^[A-Z]+$/.test(parts[0]) ? parts[0] : parts[1];
+    // Check for separator
+    if (!piecesInHand.includes('/')) {
+      throw new Error('Invalid pieces in hand format: must contain "/" separator');
+    }
 
-    const northPieces = [];
-    const southPieces = [];
+    const parts = piecesInHand.split('/');
+    if (parts.length !== 2) {
+      throw new Error('Invalid pieces in hand format: must have exactly two parts separated by "/"');
+    }
 
-    for (const piece of piecesInHand) {
+    const [uppercasePiecesStr, lowercasePiecesStr] = parts;
+
+    const firstPlayerPieces = parsePiecesInHandSection(uppercasePiecesStr, true);   // uppercase pieces
+    const secondPlayerPieces = parsePiecesInHandSection(lowercasePiecesStr, false); // lowercase pieces
+
+    return { firstPlayerPieces, secondPlayerPieces };
+  }
+
+  /**
+   * Parses a single section of the pieces in hand field
+   * @param {string} section - The section to parse
+   * @param {boolean} expectUppercase - Whether to expect uppercase pieces
+   * @returns {Array} Array of piece objects with count and identifier
+   */
+  function parsePiecesInHandSection(section, expectUppercase) {
+    if (section === '') {
+      return [];
+    }
+
+    const pieces = [];
+    let i = 0;
+
+    while (i < section.length) {
+      let count = 1;
+
+      // Check for numeric prefix (2-9 or multi-digit starting with 1-9)
+      if (/[2-9]/.test(section[i])) {
+        const numStart = i;
+        while (i < section.length && /[0-9]/.test(section[i])) {
+          i++;
+        }
+        count = parseInt(section.slice(numStart, i), 10);
+      }
+
+      // Get the piece identifier
+      if (i >= section.length) {
+        throw new Error('Invalid pieces in hand: count without piece identifier');
+      }
+
+      const piece = section[i];
+
+      // Validate piece identifier
       if (!/^[a-zA-Z]$/.test(piece)) {
         throw new Error(`Invalid piece identifier in pieces in hand: "${piece}"`);
       }
 
-      if (piece === piece.toUpperCase()) {
-        southPieces.push(piece);
-      } else {
-        northPieces.push(piece);
+      // Validate casing matches expectation
+      const isUppercase = piece === piece.toUpperCase();
+      if (expectUppercase && !isUppercase) {
+        throw new Error(`Lowercase piece "${piece}" found in uppercase section`);
+      }
+      if (!expectUppercase && isUppercase) {
+        throw new Error(`Uppercase piece "${piece}" found in lowercase section`);
+      }
+
+      pieces.push({ piece, count });
+      i++;
+    }
+
+    // Validate sorting: by count (descending) then alphabetically (ascending)
+    for (let j = 1; j < pieces.length; j++) {
+      const prev = pieces[j - 1];
+      const curr = pieces[j];
+
+      if (prev.count < curr.count) {
+        throw new Error('Pieces in hand not sorted by count (descending)');
+      }
+
+      if (prev.count === curr.count && prev.piece > curr.piece) {
+        throw new Error('Pieces in hand not sorted alphabetically within same count');
       }
     }
 
-    return { northPieces, southPieces };
+    return pieces;
   }
 
   /**
@@ -171,13 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       const ul = document.createElement('ul');
 
-      for (const piece of pieces) {
+      for (const { piece, count } of pieces) {
         const li = document.createElement('li');
 
         // Create a span with class 'piece' for consistency with board pieces
         const pieceSpan = document.createElement('span');
         pieceSpan.className = 'piece';
-        pieceSpan.textContent = piece;
+
+        // Display count prefix if > 1
+        const displayText = count > 1 ? `${count}${piece}` : piece;
+        pieceSpan.textContent = displayText;
 
         // Add appropriate class based on case
         if (piece === piece.toUpperCase()) {
@@ -241,7 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If it's a number, create that many empty cells
         if (/[1-9]/.test(char)) {
-          const emptyCount = parseInt(char, 10);
+          // Handle multi-digit numbers
+          let numStart = j;
+          while (j < rows[i].length && /[0-9]/.test(rows[i][j])) {
+            j++;
+          }
+          const emptyCount = parseInt(rows[i].slice(numStart, j), 10);
 
           for (let k = 0; k < emptyCount; k++) {
             const td = document.createElement('td');
@@ -249,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cellIndex++;
           }
 
-          j++;
           continue;
         }
 
@@ -273,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check for suffix
         let suffix = '';
-        if (j < rows[i].length && /[=<>]/.test(rows[i][j])) {
+        if (j < rows[i].length && rows[i][j] === "'") {
           suffix = rows[i][j];
           j++;
         }
