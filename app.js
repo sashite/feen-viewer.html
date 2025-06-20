@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
       main.innerHTML = '';
 
       // Parse FEEN string
-      const { piecePlacement, piecesInHand, gamesTurn } = parseFeen(feenString);
+      const { piecePlacement, piecesInHand, styleTurn } = parseFeen(feenString);
 
-      // Analyze games turn to determine which player is active and the game variants
-      const { activePlayer, firstPlayer, secondPlayer } = analyzeGamesTurn(gamesTurn);
+      // Analyze style turn to determine which player is active and the style associations
+      const { activePlayer, firstPlayer, secondPlayer } = analyzeStyleTurn(styleTurn);
 
       // Categorize pieces in hand by player
       const { firstPlayerPieces, secondPlayerPieces } = categorizePiecesInHand(piecesInHand);
@@ -64,34 +64,34 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Invalid FEEN format: must contain three space-separated fields');
     }
 
-    const [piecePlacement, piecesInHand, gamesTurn] = parts;
+    const [piecePlacement, piecesInHand, styleTurn] = parts;
 
-    return { piecePlacement, piecesInHand, gamesTurn };
+    return { piecePlacement, piecesInHand, styleTurn };
   }
 
   /**
-   * Analyzes the games turn field to determine active player and variants
-   * @param {string} gamesTurn - The games turn field from FEEN
-   * @returns {Object} Information about the game variants and active player
+   * Analyzes the style turn field to determine active player and style associations
+   * @param {string} styleTurn - The style turn field from FEEN
+   * @returns {Object} Information about the style associations and active player
    */
-  function analyzeGamesTurn(gamesTurn) {
-    if (!gamesTurn || typeof gamesTurn !== 'string') {
-      throw new Error('Invalid games turn: must be a non-empty string');
+  function analyzeStyleTurn(styleTurn) {
+    if (!styleTurn || typeof styleTurn !== 'string') {
+      throw new Error('Invalid style turn: must be a non-empty string');
     }
 
-    const parts = gamesTurn.split('/');
+    const parts = styleTurn.split('/');
 
     if (parts.length !== 2) {
-      throw new Error('Invalid games turn format: must contain two variants separated by "/"');
+      throw new Error('Invalid style turn format: must contain two styles separated by "/"');
     }
 
-    const [firstVariant, secondVariant] = parts;
+    const [firstStyle, secondStyle] = parts;
 
     // Validate format: one must be uppercase, one must be lowercase
-    const isFirstUppercase = /^[A-Z]+$/.test(firstVariant);
-    const isSecondUppercase = /^[A-Z]+$/.test(secondVariant);
-    const isFirstLowercase = /^[a-z]+$/.test(firstVariant);
-    const isSecondLowercase = /^[a-z]+$/.test(secondVariant);
+    const isFirstUppercase = /^[A-Z][A-Z0-9]*$/.test(firstStyle);
+    const isSecondUppercase = /^[A-Z][A-Z0-9]*$/.test(secondStyle);
+    const isFirstLowercase = /^[a-z][a-z0-9]*$/.test(firstStyle);
+    const isSecondLowercase = /^[a-z][a-z0-9]*$/.test(secondStyle);
 
     if (
       (isFirstUppercase && isSecondUppercase) ||
@@ -99,15 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
       (!isFirstUppercase && !isFirstLowercase) ||
       (!isSecondUppercase && !isSecondLowercase)
     ) {
-      throw new Error('Invalid games turn format: one variant must be uppercase and one lowercase');
+      throw new Error('Invalid style turn format: one style must be uppercase and one lowercase');
     }
 
-    // The first variant is always the player to move
-    const activePlayer = firstVariant;
+    // The first style is always the player to move
+    const activePlayer = firstStyle;
 
     // Determine which player corresponds to uppercase/lowercase pieces
-    const firstPlayer = isFirstUppercase ? firstVariant : secondVariant;  // uppercase game
-    const secondPlayer = isFirstLowercase ? firstVariant : secondVariant; // lowercase game
+    const firstPlayer = isFirstUppercase ? firstStyle : secondStyle;  // uppercase style
+    const secondPlayer = isFirstLowercase ? firstStyle : secondStyle; // lowercase style
 
     return { activePlayer, firstPlayer, secondPlayer };
   }
@@ -166,32 +166,56 @@ document.addEventListener('DOMContentLoaded', () => {
         count = parseInt(section.slice(numStart, i), 10);
       }
 
-      // Get the piece identifier
+      // Parse the piece with potential modifiers
       if (i >= section.length) {
         throw new Error('Invalid pieces in hand: count without piece identifier');
       }
 
-      const piece = section[i];
+      const pieceStart = i;
+      let prefix = '';
+      let basePiece = '';
+      let suffix = '';
 
-      // Validate piece identifier
-      if (!/^[a-zA-Z]$/.test(piece)) {
-        throw new Error(`Invalid piece identifier in pieces in hand: "${piece}"`);
+      // Check for prefix
+      if (i < section.length && (section[i] === '+' || section[i] === '-')) {
+        prefix = section[i];
+        i++;
       }
 
-      // Validate casing matches expectation
-      const isUppercase = piece === piece.toUpperCase();
+      // Get the base piece identifier
+      if (i >= section.length) {
+        throw new Error(`Invalid pieces in hand: prefix "${prefix}" without piece identifier`);
+      }
+
+      if (!/^[a-zA-Z]$/.test(section[i])) {
+        throw new Error(`Invalid piece identifier in pieces in hand: "${section[i]}"`);
+      }
+
+      basePiece = section[i];
+      i++;
+
+      // Check for suffix
+      if (i < section.length && section[i] === "'") {
+        suffix = section[i];
+        i++;
+      }
+
+      // Validate piece casing matches expectation
+      const isUppercase = basePiece === basePiece.toUpperCase();
       if (expectUppercase && !isUppercase) {
-        throw new Error(`Lowercase piece "${piece}" found in uppercase section`);
+        throw new Error(`Lowercase piece "${basePiece}" found in uppercase section`);
       }
       if (!expectUppercase && isUppercase) {
-        throw new Error(`Uppercase piece "${piece}" found in lowercase section`);
+        throw new Error(`Uppercase piece "${basePiece}" found in lowercase section`);
       }
 
-      pieces.push({ piece, count });
-      i++;
+      // Construct full piece identifier
+      const piece = prefix + basePiece + suffix;
+
+      pieces.push({ piece, count, basePiece, prefix, suffix });
     }
 
-    // Validate sorting: by count (descending) then alphabetically (ascending)
+    // Validate canonical sorting: by count (descending), then base piece alphabetically (ascending), then modifiers
     for (let j = 1; j < pieces.length; j++) {
       const prev = pieces[j - 1];
       const curr = pieces[j];
@@ -200,8 +224,26 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Pieces in hand not sorted by count (descending)');
       }
 
-      if (prev.count === curr.count && prev.piece > curr.piece) {
-        throw new Error('Pieces in hand not sorted alphabetically within same count');
+      if (prev.count === curr.count) {
+        if (prev.basePiece > curr.basePiece) {
+          throw new Error('Pieces in hand not sorted alphabetically by base piece within same count');
+        }
+
+        if (prev.basePiece === curr.basePiece) {
+          // Check prefix order: '-', '+', then no prefix
+          const prefixOrder = { '-': 0, '+': 1, '': 2 };
+          if (prefixOrder[prev.prefix] > prefixOrder[curr.prefix]) {
+            throw new Error('Pieces in hand not sorted by prefix order within same count and base piece');
+          }
+
+          if (prev.prefix === curr.prefix) {
+            // Check suffix order: no suffix, then "'"
+            const suffixOrder = { '': 0, "'": 1 };
+            if (suffixOrder[prev.suffix] > suffixOrder[curr.suffix]) {
+              throw new Error('Pieces in hand not sorted by suffix order within same count, base piece, and prefix');
+            }
+          }
+        }
       }
     }
 
@@ -210,18 +252,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Creates a definition list for a player
-   * @param {string} variant - The game variant name
+   * @param {string} style - The style name
    * @param {Array} pieces - The pieces in hand for this player
    * @returns {HTMLElement} The definition list
    */
-  function createPlayerDL(variant, pieces) {
+  function createPlayerDL(style, pieces) {
     const dl = document.createElement('dl');
 
-    const variantDt = document.createElement('dt');
-    variantDt.textContent = 'Game type';
+    const styleDt = document.createElement('dt');
+    styleDt.textContent = 'Style';
 
-    const variantDd = document.createElement('dd');
-    variantDd.textContent = variant;
+    const styleDd = document.createElement('dd');
+    styleDd.textContent = style;
 
     const piecesDt = document.createElement('dt');
     piecesDt.textContent = 'Pieces in hand';
@@ -244,8 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const displayText = count > 1 ? `${count}${piece}` : piece;
         pieceSpan.textContent = displayText;
 
-        // Add appropriate class based on case
-        if (piece === piece.toUpperCase()) {
+        // Add appropriate class based on case of the base piece
+        const basePiece = piece.replace(/^[-+]/, '').replace(/'$/, '');
+        if (basePiece === basePiece.toUpperCase()) {
           pieceSpan.classList.add('uppercase');
         } else {
           pieceSpan.classList.add('lowercase');
@@ -258,8 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
       piecesDd.appendChild(ul);
     }
 
-    dl.appendChild(variantDt);
-    dl.appendChild(variantDd);
+    dl.appendChild(styleDt);
+    dl.appendChild(styleDd);
     dl.appendChild(piecesDt);
     dl.appendChild(piecesDd);
 
@@ -267,9 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Creates a chess board table from the piece placement field
+   * Creates a board table from the piece placement field
    * @param {string} piecePlacement - The piece placement field from FEEN
-   * @param {string} activePlayer - The active player's variant
+   * @param {string} activePlayer - The active player's style
    * @returns {HTMLElement} The board table
    */
   function createBoardTable(piecePlacement, activePlayer) {
@@ -285,8 +328,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Parse the board rows
     const rows = piecePlacement.split('/');
 
+    // Calculate board dimensions
+    let maxCols = 0;
+    const parsedRows = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      let colCount = 0;
+      let j = 0;
+
+      while (j < rows[i].length) {
+        const char = rows[i][j];
+
+        if (/[1-9]/.test(char)) {
+          // Handle multi-digit numbers
+          let numStart = j;
+          while (j < rows[i].length && /[0-9]/.test(rows[i][j])) {
+            j++;
+          }
+          const emptyCount = parseInt(rows[i].slice(numStart, j), 10);
+          colCount += emptyCount;
+        } else {
+          // Skip piece and modifiers, count as one cell
+          if (char === '+' || char === '-') {
+            j++; // skip prefix
+          }
+          if (j < rows[i].length && /[a-zA-Z]/.test(rows[i][j])) {
+            j++; // skip piece
+          }
+          if (j < rows[i].length && rows[i][j] === "'") {
+            j++; // skip suffix
+          }
+          colCount++;
+        }
+      }
+
+      parsedRows.push({ row: rows[i], colCount });
+      maxCols = Math.max(maxCols, colCount);
+    }
+
     // Create the table
     const table = document.createElement('table');
+
+    // Set CSS custom property for column count to ensure proper grid layout
+    table.style.setProperty('--board-cols', maxCols);
 
     // Add caption indicating the active player
     const caption = document.createElement('caption');
@@ -325,8 +409,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle piece with potential modifiers
         const td = document.createElement('td');
 
-        // Check for prefix
         let prefix = '';
+        let basePiece = '';
+        let suffix = '';
+
+        // Check for prefix
         if (char === '+' || char === '-') {
           prefix = char;
           j++;
@@ -336,34 +423,34 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        // Get the piece identifier
-        const piece = rows[i][j];
+        // Get the base piece identifier
+        basePiece = rows[i][j];
         j++;
 
         // Check for suffix
-        let suffix = '';
         if (j < rows[i].length && rows[i][j] === "'") {
           suffix = rows[i][j];
           j++;
+        }
+
+        // Validate piece identifier
+        if (!/^[a-zA-Z]$/.test(basePiece)) {
+          throw new Error(`Invalid piece identifier: "${basePiece}"`);
         }
 
         // Create the piece element
         const pieceElement = document.createElement('span');
         pieceElement.className = 'piece';
 
-        // Add uppercase or lowercase class based on the piece's case
-        if (piece === piece.toUpperCase()) {
+        // Add uppercase or lowercase class based on the base piece's case
+        if (basePiece === basePiece.toUpperCase()) {
           pieceElement.classList.add('uppercase');
         } else {
           pieceElement.classList.add('lowercase');
         }
 
         // Combine prefix + piece + suffix for display
-        let displayText = '';
-        if (prefix) displayText += prefix;
-        displayText += piece;
-        if (suffix) displayText += suffix;
-
+        const displayText = prefix + basePiece + suffix;
         pieceElement.textContent = displayText;
 
         td.appendChild(pieceElement);

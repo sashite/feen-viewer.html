@@ -10,6 +10,7 @@
   --error-bg: #ffebee;
   --section-bg: #f9f9f9;
   --border-radius: 4px;
+  --board-cols: 8; /* Default to 8 columns, will be overridden by JavaScript */
 }
 
 body {
@@ -109,7 +110,7 @@ button:focus {
 table {
   border-collapse: collapse;
   margin: 2vmin auto;
-  max-width: calc(8 * var(--square-size));
+  max-width: calc(var(--board-cols) * var(--square-size));
   width: 100%;
 }
 
@@ -126,12 +127,15 @@ td {
   aspect-ratio: 1/1;
   position: relative;
   padding: 0;
+  width: calc(100% / var(--board-cols));
+  min-width: var(--square-size);
+  min-height: var(--square-size);
 }
 
-/* Create a responsive grid for the table */
+/* Create a responsive grid for the table using the calculated column count */
 tr {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--square-size), 1fr));
+  grid-template-columns: repeat(var(--board-cols), 1fr);
 }
 
 /* Checkerboard pattern */
@@ -304,6 +308,16 @@ a[rel="external"]::after {
     padding-left: 3vmin;
     background-size: 1.5vmin 1.5vmin;
     background-position: 0.8vmin center;
+  }
+
+  /* Adjust board size for mobile */
+  table {
+    max-width: calc(var(--board-cols) * var(--square-size));
+  }
+
+  td {
+    min-width: calc(var(--square-size) * 0.8);
+    min-height: calc(var(--square-size) * 0.8);
   }
 }
 

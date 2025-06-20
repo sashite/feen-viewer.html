@@ -6,7 +6,7 @@
   <title>FEEN Viewer - Forsyth–Edwards Enhanced Notation Board Game Viewer</title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-game hybrid positions.">
+  <meta name="description" content="Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.">
   <meta name="keywords" content="FEEN, Forsyth Edwards Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, chess position">
   <meta name="author" content="Sashité">
   <meta name="robots" content="index, follow">
@@ -57,14 +57,14 @@
     "@type": "WebApplication",
     "name": "FEEN Viewer",
     "alternateName": "Forsyth–Edwards Enhanced Notation Viewer",
-    "description": "Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-game hybrid positions.",
+    "description": "Interactive web viewer for FEEN (Forsyth–Edwards Enhanced Notation) board game positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.",
     "url": "https://sashite.github.io/feen-viewer.html/",
     "applicationCategory": "GameApplication",
     "operatingSystem": "Web Browser",
     "browserRequirements": "Requires JavaScript",
     "softwareVersion": "1.0.0",
     "dateCreated": "2025-06-09",
-    "dateModified": "2025-06-09",
+    "dateModified": "2025-06-20",
     "creator": {
       "@type": "Organization",
       "name": "Sashité",
@@ -87,7 +87,9 @@
       "FEEN notation parsing and validation",
       "Visual board representation",
       "Support for Chess, Shōgi, Xiangqi positions",
-      "Cross-game hybrid position support",
+      "Cross-style hybrid position support",
+      "Captured pieces display",
+      "Multi-dimensional board parsing",
       "Responsive design",
       "Real-time position updates"
     ],
@@ -135,10 +137,54 @@
       <p>
         FEEN (Forsyth–Edwards Enhanced Notation) is a compact, canonical, and rule-agnostic textual format
         for representing static board positions in two-player piece-placement games. It extends traditional
-        FEN notation to support cross-game scenarios, arbitrary board dimensions, and captured pieces management.
+        FEN notation to support cross-style scenarios, arbitrary board dimensions, and captured pieces management.
+      </p>
+      <p>
+        FEEN consists of three space-separated fields: <strong>&lt;PIECE-PLACEMENT&gt;</strong> (board configuration),
+        <strong>&lt;PIECES-IN-HAND&gt;</strong> (captured pieces), and <strong>&lt;STYLE-TURN&gt;</strong>
+        (active player and style identifiers).
       </p>
       <p>
         Learn more about the <a href="https://sashite.dev/documents/feen/1.0.0/" rel="external">FEEN Specification</a>.
+      </p>
+    </section>
+
+    <section class="examples">
+      <h2>Example FEEN Strings</h2>
+      <dl>
+        <dt>Chess Starting Position</dt>
+        <dd><code>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR / CHESS/chess</code></dd>
+
+        <dt>Shōgi Starting Position</dt>
+        <dd><code>lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL / SHOGI/shogi</code></dd>
+
+        <dt>Cross-Style Game (Chess vs Ōgi)</dt>
+        <dd><code>lnsiksnl/1b4r1/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR / CHESS/ogi</code></dd>
+
+        <dt>Position with Captured Pieces</dt>
+        <dd><code>r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R 2P/p CHESS/chess</code></dd>
+
+        <dt>Irregular Board Shape</dt>
+        <dd><code>rkr/pp/PPPP / GAME/game</code></dd>
+
+        <dt>1D Chess Board (size 8) Starting Position</dt>
+        <dd><code>kp4PK / CHESS8/chess8</code></dd>
+      </dl>
+    </section>
+
+    <section class="format">
+      <h2>FEEN Format Structure</h2>
+      <p>
+        Every FEEN string contains exactly three space-separated fields:
+      </p>
+      <ol>
+        <li><strong>Piece Placement</strong>: Board configuration using PNN notation with <code>/</code> separators</li>
+        <li><strong>Pieces in Hand</strong>: Captured pieces in canonical order (<code>UPPERCASE/lowercase</code>)</li>
+        <li><strong>Style Turn</strong>: Active player and style identifiers (<code>STYLE1/style2</code>)</li>
+      </ol>
+      <p>
+        Supports piece modifiers (<code>+</code>, <code>-</code>, <code>'</code>), multi-dimensional boards,
+        and cross-style hybrid positions.
       </p>
     </section>
 
