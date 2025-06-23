@@ -100,7 +100,7 @@ Identifies the style type associated with each player and whose turn it is:
 
 #### Standard Chess Starting Position
 ```
-rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR / CHESS/chess
++rnbq+kbn+r/pppppppp/8/8/8/8/PPPPPPPP/+RNBQ+KBN+R / CHESS/chess
 ```
 
 #### Chess Position with Captures
@@ -120,7 +120,7 @@ lnsgkgsnl/1r5b1/ppppppppp/9/9/2P6/PP1PPPPPP/1B5+R1/LNSGKGSNL 2PB/pr SHOGI/shogi
 
 #### Cross-Style Hybrid Position (Chess vs Ōgi)
 ```
-lnsiksnl/1b4r1/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR / CHESS/ogi
+lnsiksnl/1r4b1/pppppppp/8/8/8/PPPPPPPP/+RNBQ+KBN+R / CHESS/ogi
 ```
 
 #### Irregular Board Shape
