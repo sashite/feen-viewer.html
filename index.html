@@ -8,7 +8,7 @@
   <!-- SEO Meta Tags -->
   <meta name="description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.">
   <meta name="keywords" content="FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position">
-  <meta name="author" content="Sashité">
+  <meta name="author" content="Cyril Kato">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://sashite.github.io/feen-viewer.html/">
 
@@ -58,7 +58,7 @@
       --error-bg: #ffebee;
       --section-bg: #f9f9f9;
       --border-radius: 4px;
-      --board-cols: 8; /* Default to 8 columns, will be overridden by JavaScript */
+      --board-cols: 8;
     }
 
     body {
@@ -70,7 +70,6 @@
       font-size: var(--font-size-base);
     }
 
-    /* Header styles */
     header h1 {
       margin-bottom: 0.5vmin;
     }
@@ -81,7 +80,6 @@
       margin: 3vmin 0;
     }
 
-    /* Form styles */
     form {
       margin-bottom: 2vmin;
     }
@@ -102,7 +100,6 @@
       border-color: #999;
     }
 
-    /* Accessibility - visually hidden but available to screen readers */
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -142,7 +139,6 @@
       outline-offset: 2px;
     }
 
-    /* Board styles */
     table {
       border-collapse: collapse;
       margin: 2vmin auto;
@@ -156,7 +152,6 @@
       font-size: calc(var(--font-size-base) * 1.2);
     }
 
-    /* Make cells square using aspect-ratio */
     td {
       border: 1px solid var(--board-border);
       text-align: center;
@@ -168,19 +163,16 @@
       min-height: var(--square-size);
     }
 
-    /* Create a responsive grid for the table using the calculated column count */
     tr {
       display: grid;
       grid-template-columns: repeat(var(--board-cols), 1fr);
     }
 
-    /* Checkerboard pattern */
     tr:nth-child(odd) td:nth-child(even),
     tr:nth-child(even) td:nth-child(odd) {
       background-color: var(--accent-color);
     }
 
-    /* Base piece styles that apply everywhere */
     .piece {
       font-family: monospace;
       font-size: calc(var(--font-size-base) * 1.5);
@@ -190,7 +182,6 @@
       font-weight: bold;
     }
 
-    /* Specific styles for pieces on the board */
     td .piece {
       position: absolute;
       top: 50%;
@@ -201,14 +192,12 @@
       font-size: calc(var(--square-size) * 0.6);
     }
 
-    /* Specific styles for pieces in lists */
     li .piece {
       display: inline-flex;
       vertical-align: middle;
       margin-right: 0.5vmin;
     }
 
-    /* Piece colors */
     .lowercase {
       color: black;
     }
@@ -217,7 +206,6 @@
       color: red;
     }
 
-    /* Player information styling */
     dl {
       margin: 2vmin 0;
       padding: 1.5vmin;
@@ -263,7 +251,6 @@
       border-radius: calc(var(--border-radius) / 2);
     }
 
-    /* Footer sections */
     footer {
       margin-top: 4vmin;
     }
@@ -287,7 +274,6 @@
       margin-bottom: 0;
     }
 
-    /* Links */
     a {
       color: #0066cc;
       text-decoration: none;
@@ -308,7 +294,6 @@
       opacity: 0.7;
     }
 
-    /* Error styling */
     .error {
       color: var(--error-color);
       background-color: var(--error-bg);
@@ -323,7 +308,6 @@
       font-weight: 500;
     }
 
-    /* Responsive adjustments */
     @media (max-width: 480px) {
       :root {
         --font-size-base: 3vmin;
@@ -344,7 +328,6 @@
         padding-left: 1vmin;
       }
 
-      /* Adjust board size for mobile */
       table {
         max-width: calc(var(--board-cols) * var(--square-size));
       }
@@ -366,7 +349,6 @@
       }
     }
 
-    /* Print styles */
     @media print {
       header form,
       footer,
@@ -392,22 +374,537 @@
 
   <!-- Scripts -->
   <script>
-    // FEEN Viewer - A simple viewer for FEEN notation
-    // Implements the FEEN specification version 1.0.0 using PIN-style piece tokens
+    /**
+     * FEEN Viewer - A viewer for FEEN v1.0.0 notation
+     * Implements the FEEN specification version 1.0.0
+     * Dependencies: EPIN v1.0.0, SIN v1.0.0
+     */
 
     document.addEventListener('DOMContentLoaded', () => {
-      const form = document.querySelector('form');
-      const main = document.querySelector('main');
+      // ========================================================================
+      // EPIN Token Validation (per EPIN v1.0.0 specification)
+      // Format: [state-modifier] letter [terminal-marker] [derivation-marker]
+      // ========================================================================
 
-      // Parse initial FEEN from input field on page load
-      displayPosition(document.querySelector('input[name="feen"]').value);
+      /**
+       * EPIN regex pattern per specification §5
+       * Anchored to whole string, rejects line breaks
+       */
+      const EPIN_PATTERN = /^[-+]?[A-Za-z]\^?'?$/;
 
-      // Handle form submission
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const feenInput = form.querySelector('input[name="feen"]').value;
-        displayPosition(feenInput);
-      });
+      /**
+       * Validates an EPIN token
+       * @param {string} token - The token to validate
+       * @returns {boolean} True if valid EPIN token
+       */
+      function isValidEpin(token) {
+        if (!token || typeof token !== 'string') return false;
+        if (token.includes('\r') || token.includes('\n')) return false;
+        return EPIN_PATTERN.test(token);
+      }
+
+      /**
+       * Parses an EPIN token into its components
+       * @param {string} token - A valid EPIN token
+       * @returns {Object} Parsed components
+       */
+      function parseEpin(token) {
+        if (!isValidEpin(token)) {
+          throw new Error(`Invalid EPIN token: "${token}"`);
+        }
+
+        let i = 0;
+        let stateModifier = null;
+        let letter = null;
+        let terminalMarker = false;
+        let derivationMarker = false;
+
+        // Check for state modifier (+ or -)
+        if (token[i] === '+' || token[i] === '-') {
+          stateModifier = token[i];
+          i++;
+        }
+
+        // Get the letter (required)
+        letter = token[i];
+        i++;
+
+        // Check for terminal marker (^)
+        if (i < token.length && token[i] === '^') {
+          terminalMarker = true;
+          i++;
+        }
+
+        // Check for derivation marker (')
+        if (i < token.length && token[i] === "'") {
+          derivationMarker = true;
+          i++;
+        }
+
+        return {
+          stateModifier,
+          letter,
+          terminalMarker,
+          derivationMarker,
+          // Derived properties per EPIN §6
+          pieceName: letter.toUpperCase(),
+          pieceSide: letter === letter.toUpperCase() ? 'first' : 'second',
+          pieceState: stateModifier === '+' ? 'enhanced' : stateModifier === '-' ? 'diminished' : 'normal',
+          isTerminal: terminalMarker,
+          isDerived: derivationMarker
+        };
+      }
+
+      /**
+       * Extracts base letter from EPIN token (for sorting)
+       * @param {string} token - EPIN token
+       * @returns {string} The letter component
+       */
+      function getEpinBaseLetter(token) {
+        const match = token.match(/[A-Za-z]/);
+        return match ? match[0] : '';
+      }
+
+      // ========================================================================
+      // SIN Token Validation (per SIN v1.0.0 specification)
+      // Format: exactly one ASCII letter
+      // ========================================================================
+
+      /**
+       * SIN regex pattern per specification §4.3
+       * Anchored to whole string
+       */
+      const SIN_PATTERN = /^[A-Za-z]$/;
+
+      /**
+       * Validates a SIN token
+       * @param {string} token - The token to validate
+       * @returns {boolean} True if valid SIN token
+       */
+      function isValidSin(token) {
+        if (!token || typeof token !== 'string') return false;
+        if (token.includes('\r') || token.includes('\n')) return false;
+        return SIN_PATTERN.test(token);
+      }
+
+      /**
+       * Parses a SIN token
+       * @param {string} token - A valid SIN token
+       * @returns {Object} Parsed components
+       */
+      function parseSin(token) {
+        if (!isValidSin(token)) {
+          throw new Error(`Invalid SIN token: "${token}"`);
+        }
+
+        return {
+          abbr: token.toUpperCase(),
+          side: token === token.toUpperCase() ? 'first' : 'second',
+          raw: token
+        };
+      }
+
+      // ========================================================================
+      // FEEN Parsing (per FEEN v1.0.0 specification)
+      // ========================================================================
+
+      /**
+       * Parses a FEEN string into its three fields
+       * @param {string} feenString - The FEEN notation string
+       * @returns {Object} The parsed fields
+       */
+      function parseFeen(feenString) {
+        // §6.1: MUST NOT contain leading or trailing whitespace
+        if (!feenString || typeof feenString !== 'string') {
+          throw new Error('Invalid FEEN: must be a non-empty string');
+        }
+
+        // §6.1: Line breaks MUST NOT appear anywhere
+        if (feenString.includes('\r') || feenString.includes('\n')) {
+          throw new Error('Invalid FEEN: must not contain line breaks');
+        }
+
+        const trimmed = feenString.trim();
+        if (trimmed !== feenString) {
+          throw new Error('Invalid FEEN: must not have leading or trailing whitespace');
+        }
+
+        if (!trimmed) {
+          throw new Error('Invalid FEEN: must be a non-empty string');
+        }
+
+        // §6: Three fields separated by single ASCII spaces
+        const parts = trimmed.split(' ');
+
+        if (parts.length !== 3) {
+          throw new Error('Invalid FEEN format: must contain exactly three space-separated fields');
+        }
+
+        const [piecePlacement, hands, styleTurn] = parts;
+
+        // Validate each field is non-empty
+        if (!piecePlacement) {
+          throw new Error('Invalid FEEN: piece placement field cannot be empty');
+        }
+        if (!hands) {
+          throw new Error('Invalid FEEN: hands field cannot be empty');
+        }
+        if (!styleTurn) {
+          throw new Error('Invalid FEEN: style–turn field cannot be empty');
+        }
+
+        return { piecePlacement, hands, styleTurn };
+      }
+
+      /**
+       * Analyzes the style–turn field per FEEN §9
+       * @param {string} styleTurn - The style–turn field from FEEN
+       * @returns {Object} Parsed style–turn information
+       */
+      function parseStyleTurn(styleTurn) {
+        if (!styleTurn || typeof styleTurn !== 'string') {
+          throw new Error('Invalid style–turn: must be a non-empty string');
+        }
+
+        // §9: Format is <ACTIVE-STYLE>/<INACTIVE-STYLE>
+        const slashIndex = styleTurn.indexOf('/');
+        if (slashIndex === -1) {
+          throw new Error('Invalid style–turn format: must contain "/" separator');
+        }
+
+        const activeStyle = styleTurn.substring(0, slashIndex);
+        const inactiveStyle = styleTurn.substring(slashIndex + 1);
+
+        // Validate both are valid SIN tokens (single ASCII letter)
+        if (!isValidSin(activeStyle)) {
+          throw new Error(`Invalid active style: "${activeStyle}" is not a valid SIN token (must be exactly one ASCII letter)`);
+        }
+        if (!isValidSin(inactiveStyle)) {
+          throw new Error(`Invalid inactive style: "${inactiveStyle}" is not a valid SIN token (must be exactly one ASCII letter)`);
+        }
+
+        // §9.3: The two STYLE tokens MUST be of opposite case
+        const activeIsUpper = activeStyle === activeStyle.toUpperCase();
+        const inactiveIsUpper = inactiveStyle === inactiveStyle.toUpperCase();
+
+        if (activeIsUpper === inactiveIsUpper) {
+          throw new Error('Invalid style–turn format: one style must be uppercase and one lowercase');
+        }
+
+        // §9.1: Uppercase = first player, lowercase = second player
+        // §9.2: First position = active player
+        const activePlayerSide = activeIsUpper ? 'first' : 'second';
+        const firstPlayerStyle = activeIsUpper ? activeStyle : inactiveStyle;
+        const secondPlayerStyle = activeIsUpper ? inactiveStyle : activeStyle;
+
+        return {
+          activeStyle,
+          inactiveStyle,
+          activePlayerSide,
+          firstPlayerStyle,
+          secondPlayerStyle
+        };
+      }
+
+      /**
+       * Parses the hands field per FEEN §8
+       * @param {string} handsField - The hands field from FEEN
+       * @returns {Object} Parsed hands for both players
+       */
+      function parseHands(handsField) {
+        if (!handsField || typeof handsField !== 'string') {
+          throw new Error('Invalid hands: must be a string');
+        }
+
+        // §8: Format is <FIRST-HAND>/<SECOND-HAND>
+        const slashIndex = handsField.indexOf('/');
+        if (slashIndex === -1) {
+          throw new Error('Invalid hands format: must contain "/" separator');
+        }
+
+        // Check there's only one slash
+        if (handsField.indexOf('/', slashIndex + 1) !== -1) {
+          throw new Error('Invalid hands format: must have exactly one "/" separator');
+        }
+
+        const firstHandStr = handsField.substring(0, slashIndex);
+        const secondHandStr = handsField.substring(slashIndex + 1);
+
+        const firstPlayerHand = parseHandItems(firstHandStr, 'first');
+        const secondPlayerHand = parseHandItems(secondHandStr, 'second');
+
+        return { firstPlayerHand, secondPlayerHand };
+      }
+
+      /**
+       * Parses hand items from a hand string per FEEN §8.1-8.2
+       * @param {string} handStr - The hand string to parse
+       * @param {string} playerLabel - 'first' or 'second' for error messages
+       * @returns {Array} Array of {piece, count} objects
+       */
+      function parseHandItems(handStr, playerLabel) {
+        if (handStr === '') {
+          return [];
+        }
+
+        const items = [];
+        let i = 0;
+
+        while (i < handStr.length) {
+          let count = 1;
+
+          // §8.2: If next char is digit, read maximal digit sequence as count
+          if (/[0-9]/.test(handStr[i])) {
+            // Check for leading zero (not allowed per §8.1)
+            if (handStr[i] === '0') {
+              throw new Error(`Invalid ${playerLabel} hand: count cannot start with 0`);
+            }
+
+            const numStart = i;
+            while (i < handStr.length && /[0-9]/.test(handStr[i])) {
+              i++;
+            }
+            count = parseInt(handStr.slice(numStart, i), 10);
+
+            // §8.1: If count is present, it MUST be >= 2
+            if (count < 2) {
+              throw new Error(`Invalid ${playerLabel} hand: explicit count must be >= 2`);
+            }
+          }
+
+          // Now read the EPIN token
+          if (i >= handStr.length) {
+            throw new Error(`Invalid ${playerLabel} hand: count without piece token`);
+          }
+
+          // Read EPIN token: [+-]?[A-Za-z][^]?[']?
+          const tokenStart = i;
+
+          // Optional state modifier
+          if (handStr[i] === '+' || handStr[i] === '-') {
+            i++;
+          }
+
+          // Required letter
+          if (i >= handStr.length || !/[A-Za-z]/.test(handStr[i])) {
+            throw new Error(`Invalid ${playerLabel} hand: expected piece letter at position ${i}`);
+          }
+          i++;
+
+          // Optional terminal marker
+          if (i < handStr.length && handStr[i] === '^') {
+            i++;
+          }
+
+          // Optional derivation marker
+          if (i < handStr.length && handStr[i] === "'") {
+            i++;
+          }
+
+          const piece = handStr.slice(tokenStart, i);
+
+          if (!isValidEpin(piece)) {
+            throw new Error(`Invalid ${playerLabel} hand: "${piece}" is not a valid EPIN token`);
+          }
+
+          items.push({ piece, count });
+        }
+
+        // Validate canonical ordering per §10.2
+        validateHandOrdering(items, playerLabel);
+
+        return items;
+      }
+
+      /**
+       * Validates that hand items are in canonical order per FEEN §10.2
+       * @param {Array} items - Array of {piece, count} objects
+       * @param {string} playerLabel - For error messages
+       */
+      function validateHandOrdering(items, playerLabel) {
+        for (let i = 1; i < items.length; i++) {
+          const prev = items[i - 1];
+          const curr = items[i];
+
+          const cmp = compareHandItems(prev, curr);
+          if (cmp > 0) {
+            throw new Error(`Invalid ${playerLabel} hand: items not in canonical order`);
+          }
+          if (cmp === 0) {
+            throw new Error(`Invalid ${playerLabel} hand: duplicate items should be aggregated`);
+          }
+        }
+      }
+
+      /**
+       * Compares two hand items for canonical ordering per FEEN §10.2
+       * @returns {number} Negative if a < b, positive if a > b, 0 if equal
+       */
+      function compareHandItems(a, b) {
+        // 1. By multiplicity – descending (larger counts first)
+        if (a.count !== b.count) {
+          return b.count - a.count;
+        }
+
+        const aParsed = parseEpin(a.piece);
+        const bParsed = parseEpin(b.piece);
+
+        // 2. By EPIN base letter – case-insensitive alphabetical order
+        const aLetter = aParsed.letter.toLowerCase();
+        const bLetter = bParsed.letter.toLowerCase();
+        if (aLetter !== bLetter) {
+          return aLetter.localeCompare(bLetter);
+        }
+
+        // 3. By EPIN letter case – uppercase before lowercase
+        const aIsUpper = aParsed.letter === aParsed.letter.toUpperCase();
+        const bIsUpper = bParsed.letter === bParsed.letter.toUpperCase();
+        if (aIsUpper !== bIsUpper) {
+          return aIsUpper ? -1 : 1;
+        }
+
+        // 4. By EPIN state modifier – '-' before '+' before none
+        const stateOrder = { '-': 0, '+': 1, null: 2 };
+        const aState = stateOrder[aParsed.stateModifier] ?? 2;
+        const bState = stateOrder[bParsed.stateModifier] ?? 2;
+        if (aState !== bState) {
+          return aState - bState;
+        }
+
+        // 5. By EPIN terminal marker – absent before present
+        if (aParsed.terminalMarker !== bParsed.terminalMarker) {
+          return aParsed.terminalMarker ? 1 : -1;
+        }
+
+        // 6. By EPIN derivation marker – absent before present
+        if (aParsed.derivationMarker !== bParsed.derivationMarker) {
+          return aParsed.derivationMarker ? 1 : -1;
+        }
+
+        return 0;
+      }
+
+      /**
+       * Parses a segment (rank/row) into placement tokens per FEEN §7.3-7.4
+       * @param {string} segmentStr - The segment string to parse
+       * @returns {Array} Array where each element is either an EPIN string or null (empty)
+       */
+      function parseSegment(segmentStr) {
+        const cells = [];
+        let i = 0;
+
+        while (i < segmentStr.length) {
+          const char = segmentStr[i];
+
+          // §7.3: Empty-count token (integer >= 1, no leading zeros)
+          if (/[1-9]/.test(char)) {
+            const numStart = i;
+            while (i < segmentStr.length && /[0-9]/.test(segmentStr[i])) {
+              i++;
+            }
+            const emptyCount = parseInt(segmentStr.slice(numStart, i), 10);
+
+            for (let k = 0; k < emptyCount; k++) {
+              cells.push(null);
+            }
+            continue;
+          }
+
+          // Leading zero is invalid for empty-count
+          if (char === '0') {
+            throw new Error(`Invalid piece placement: leading zero in empty-count at position ${i}`);
+          }
+
+          // §7.3: Piece token (valid EPIN token)
+          const tokenStart = i;
+
+          // Optional state modifier
+          if (char === '+' || char === '-') {
+            i++;
+            if (i >= segmentStr.length || !/[A-Za-z]/.test(segmentStr[i])) {
+              throw new Error(`Invalid piece placement: state modifier without letter at position ${tokenStart}`);
+            }
+          }
+
+          // Required letter
+          if (!/[A-Za-z]/.test(segmentStr[i])) {
+            throw new Error(`Invalid piece placement: expected letter at position ${i}`);
+          }
+          i++;
+
+          // Optional terminal marker
+          if (i < segmentStr.length && segmentStr[i] === '^') {
+            i++;
+          }
+
+          // Optional derivation marker
+          if (i < segmentStr.length && segmentStr[i] === "'") {
+            i++;
+          }
+
+          const piece = segmentStr.slice(tokenStart, i);
+
+          if (!isValidEpin(piece)) {
+            throw new Error(`Invalid piece placement: "${piece}" is not a valid EPIN token`);
+          }
+
+          cells.push(piece);
+        }
+
+        return cells;
+      }
+
+      /**
+       * Parses the piece placement field per FEEN §7
+       * @param {string} piecePlacement - The piece placement field
+       * @returns {Object} Parsed board data
+       */
+      function parsePiecePlacement(piecePlacement) {
+        if (!piecePlacement || typeof piecePlacement !== 'string') {
+          throw new Error('Invalid piece placement: must be a non-empty string');
+        }
+
+        // §7.2: Field MUST NOT start or end with /
+        if (piecePlacement.startsWith('/')) {
+          throw new Error('Invalid piece placement: must not start with "/"');
+        }
+        if (piecePlacement.endsWith('/')) {
+          throw new Error('Invalid piece placement: must not end with "/"');
+        }
+
+        // Check if this is a multi-dimensional board beyond 2D
+        if (piecePlacement.includes('//')) {
+          throw new Error('Only 1D and 2D boards are supported in this viewer');
+        }
+
+        // Split into segments by /
+        const segmentStrs = piecePlacement.split('/');
+
+        if (segmentStrs.length === 0) {
+          throw new Error('Invalid piece placement: no segments found');
+        }
+
+        // Parse each segment
+        const segments = segmentStrs.map((segStr, idx) => {
+          if (segStr === '') {
+            throw new Error(`Invalid piece placement: empty segment at position ${idx}`);
+          }
+          return parseSegment(segStr);
+        });
+
+        // Determine max width for grid
+        const maxWidth = Math.max(...segments.map(s => s.length));
+
+        return {
+          segments,
+          maxWidth,
+          height: segments.length
+        };
+      }
+
+      // ========================================================================
+      // Display Functions
+      // ========================================================================
 
       /**
        * Main function to parse FEEN and display the position
@@ -415,273 +912,51 @@
        */
       function displayPosition(feenString) {
         try {
-          // Clear previous content
           main.innerHTML = '';
 
-          // Parse FEEN string
-          const { piecePlacement, piecesInHand, styleTurn } = parseFeen(feenString);
+          // Parse FEEN string into three fields
+          const { piecePlacement, hands, styleTurn } = parseFeen(feenString);
 
-          // Analyze style turn to determine which player is active and the style variants
-          const { activePlayer, firstPlayerStyle, secondPlayerStyle } = analyzeStyleTurn(styleTurn);
+          // Parse each field
+          const styleTurnData = parseStyleTurn(styleTurn);
+          const handsData = parseHands(hands);
+          const boardData = parsePiecePlacement(piecePlacement);
 
-          // Categorize pieces in hand by player
-          const { firstPlayerPieces, secondPlayerPieces } = categorizePiecesInHand(piecesInHand);
+          // Create display elements
+          const firstPlayerDL = createPlayerDL(
+            styleTurnData.firstPlayerStyle,
+            handsData.firstPlayerHand,
+            true
+          );
+          const secondPlayerDL = createPlayerDL(
+            styleTurnData.secondPlayerStyle,
+            handsData.secondPlayerHand,
+            false
+          );
+          const boardTable = createBoardTable(
+            boardData,
+            styleTurnData.activeStyle,
+            styleTurnData.activePlayerSide
+          );
 
-          // Create HTML representation
-          // First player pieces (left side of /) always go with firstPlayerStyle (uppercase style)
-          // Second player pieces (right side of /) always go with secondPlayerStyle (lowercase style)
-          const firstPlayerDL = createPlayerDL(firstPlayerStyle, firstPlayerPieces, true);
-          const secondPlayerDL = createPlayerDL(secondPlayerStyle, secondPlayerPieces, false);
-          const boardTable = createBoardTable(piecePlacement, activePlayer, firstPlayerStyle);
-
-          // Determine which player is active and display according to chess convention:
-          // - Inactive player at top (opponent's side)
-          // - Active player at bottom (our side)
-          const isFirstPlayerActive = activePlayer === firstPlayerStyle;
+          // Display: inactive player at top, active player at bottom (chess convention)
+          const isFirstPlayerActive = styleTurnData.activePlayerSide === 'first';
           const activePlayerDL = isFirstPlayerActive ? firstPlayerDL : secondPlayerDL;
           const inactivePlayerDL = isFirstPlayerActive ? secondPlayerDL : firstPlayerDL;
 
-          // Append to main - inactive player at top, active player at bottom (chess convention)
           main.appendChild(inactivePlayerDL);
           main.appendChild(boardTable);
           main.appendChild(activePlayerDL);
+
         } catch (error) {
-          // Display error message
           main.innerHTML = `<div class="error"><p>Error: ${error.message}</p></div>`;
         }
       }
 
       /**
-       * Parses a FEEN string into its three components
-       * @param {string} feenString - The FEEN notation string
-       * @returns {Object} The parsed components
-       */
-      function parseFeen(feenString) {
-        if (!feenString || typeof feenString !== 'string') {
-          throw new Error('Invalid FEEN: must be a non-empty string');
-        }
-
-        const trimmed = feenString.trim();
-        if (!trimmed) {
-          throw new Error('Invalid FEEN: must be a non-empty string');
-        }
-
-        const parts = trimmed.split(' ');
-
-        if (parts.length !== 3) {
-          throw new Error('Invalid FEEN format: must contain exactly three space-separated fields');
-        }
-
-        const [piecePlacement, piecesInHand, styleTurn] = parts;
-
-        // Validate each field is non-empty
-        if (!piecePlacement) {
-          throw new Error('Invalid FEEN: piece placement field cannot be empty');
-        }
-        if (!piecesInHand) {
-          throw new Error('Invalid FEEN: pieces in hand (hands) field cannot be empty');
-        }
-        if (!styleTurn) {
-          throw new Error('Invalid FEEN: style–turn field cannot be empty');
-        }
-
-        return { piecePlacement, piecesInHand, styleTurn };
-      }
-
-      /**
-       * Analyzes the style turn field according to FEEN specification
-       * @param {string} styleTurn - The style turn field from FEEN
-       * @returns {Object} Information about the styles and active player
-       */
-      function analyzeStyleTurn(styleTurn) {
-        if (!styleTurn || typeof styleTurn !== 'string') {
-          throw new Error('Invalid style turn: must be a non-empty string');
-        }
-
-        const parts = styleTurn.split('/');
-
-        if (parts.length !== 2) {
-          throw new Error('Invalid style turn format: must contain exactly two styles separated by "/"');
-        }
-
-        const [firstStyle, secondStyle] = parts;
-
-        // Validate that both styles are non-empty
-        if (!firstStyle || !secondStyle) {
-          throw new Error('Invalid style turn: both styles must be non-empty');
-        }
-
-        // Validate style format according to SIN specification
-        const stylePattern = /^[A-Za-z][A-Za-z0-9]*$/;
-        if (!stylePattern.test(firstStyle) || !stylePattern.test(secondStyle)) {
-          throw new Error('Invalid style format: styles must start with a letter and contain only letters and digits');
-        }
-
-        // Validate case: one must be uppercase, one must be lowercase
-        const isFirstUppercase = /^[A-Z][A-Z0-9]*$/.test(firstStyle);
-        const isSecondUppercase = /^[A-Z][A-Z0-9]*$/.test(secondStyle);
-        const isFirstLowercase = /^[a-z][a-z0-9]*$/.test(firstStyle);
-        const isSecondLowercase = /^[a-z][a-z0-9]*$/.test(secondStyle);
-
-        if ((isFirstUppercase && isSecondUppercase) || (isFirstLowercase && isSecondLowercase)) {
-          throw new Error('Invalid style turn format: one style must be uppercase and one lowercase');
-        }
-
-        if ((!isFirstUppercase && !isFirstLowercase) || (!isSecondUppercase && !isSecondLowercase)) {
-          throw new Error('Invalid style format: styles must be entirely uppercase or entirely lowercase');
-        }
-
-        // The first style is always the active player (player to move)
-        const activePlayer = firstStyle;
-
-        // Determine which player corresponds to uppercase/lowercase styles
-        // First player ALWAYS has uppercase style, second player ALWAYS has lowercase style
-        const firstPlayerStyle = isFirstUppercase ? firstStyle : secondStyle;   // uppercase style (first player)
-        const secondPlayerStyle = isFirstLowercase ? firstStyle : secondStyle;  // lowercase style (second player)
-
-        return { activePlayer, firstPlayerStyle, secondPlayerStyle };
-      }
-
-      /**
-       * Categorizes pieces in hand by player according to FEEN specification
-       * @param {string} piecesInHand - The pieces in hand (hands) field from FEEN
-       * @returns {Object} Pieces categorized by player
-       */
-      function categorizePiecesInHand(piecesInHand) {
-        if (!piecesInHand || typeof piecesInHand !== 'string') {
-          throw new Error('Invalid pieces in hand: must be a string');
-        }
-
-        // Check for separator
-        if (!piecesInHand.includes('/')) {
-          throw new Error('Invalid pieces in hand format: must contain "/" separator');
-        }
-
-        const parts = piecesInHand.split('/');
-        if (parts.length !== 2) {
-          throw new Error('Invalid pieces in hand format: must have exactly two parts separated by "/"');
-        }
-
-        const [firstPlayerPiecesStr, secondPlayerPiecesStr] = parts;
-
-        // Left side of "/" = first player's hand, right side = second player's hand
-        const firstPlayerPieces = parsePiecesInHandSection(firstPlayerPiecesStr, 'first');
-        const secondPlayerPieces = parsePiecesInHandSection(secondPlayerPiecesStr, 'second');
-
-        return { firstPlayerPieces, secondPlayerPieces };
-      }
-
-      /**
-       * Parses a single section of the pieces in hand field
-       * Supports PIN-style terminal marker '^' and legacy derivation marker "'".
-       * @param {string} section - The section to parse
-       * @param {string} playerType - 'first' or 'second' for error messages
-       * @returns {Array} Array of piece objects with count and identifier
-       */
-      function parsePiecesInHandSection(section, playerType) {
-        if (section === '') {
-          return [];
-        }
-
-        const pieces = [];
-        let i = 0;
-
-        while (i < section.length) {
-          let count = 1;
-
-          // Check for numeric prefix (2-9 or multi-digit starting with 1-9)
-          if (/[2-9]/.test(section[i])) {
-            const numStart = i;
-            while (i < section.length && /[0-9]/.test(section[i])) {
-              i++;
-            }
-            count = parseInt(section.slice(numStart, i), 10);
-
-            // Validate count is not 0 or 1 when explicitly stated
-            if (count <= 1) {
-              throw new Error(`Invalid pieces in hand: count "${count}" not allowed (must be 2 or greater when specified)`);
-            }
-          }
-
-          // Get the piece identifier (PIN-style with optional state and terminal marker)
-          if (i >= section.length) {
-            throw new Error('Invalid pieces in hand: count without piece identifier');
-          }
-
-          const pieceStart = i;
-          let prefix = '';
-          let suffix = '';
-          let piece = '';
-
-          // Check for suffixes: PIN terminal marker '^' then optional EPIN derivation marker "'"
-          let terminalMarker = "";
-          let derivationMarker = "";
-
-          // First, optional terminal marker '^'
-          if (i < section.length && section[i] === "^") {
-            terminalMarker = "^";
-            i++;
-          }
-
-          // Then, optional derivation marker "'"
-          if (i < section.length && section[i] === "'") {
-            derivationMarker = "'";
-            i++;
-          }
-
-          // Build complete EPIN identifier: [state][letter][^][']
-          const fullPiece = prefix + piece + terminalMarker + derivationMarker;
-
-          pieces.push({ piece: fullPiece, count });
-        }
-
-        // Validate sorting according to FEEN specification
-        validatePiecesInHandSorting(pieces);
-
-        return pieces;
-      }
-
-      /**
-       * Validates that pieces in hand are sorted according to FEEN specification
-       * @param {Array} pieces - Array of piece objects to validate
-       */
-      function validatePiecesInHandSorting(pieces) {
-        for (let i = 1; i < pieces.length; i++) {
-          const prev = pieces[i - 1];
-          const curr = pieces[i];
-
-          // Extract base letter for comparison (ignoring modifiers and terminal markers)
-          const prevBase = prev.piece.replace(/[+\-'^]/g, '');
-          const currBase = curr.piece.replace(/[+\-'^]/g, '');
-
-          // Rule 1: Sort by count (descending)
-          if (prev.count < curr.count) {
-            throw new Error('Pieces in hand not sorted by count (descending)');
-          }
-
-          // Rule 2: Within same count, sort by base letter (ascending, case-insensitive)
-          if (prev.count === curr.count) {
-            const prevLower = prevBase.toLowerCase();
-            const currLower = currBase.toLowerCase();
-
-            if (prevLower > currLower) {
-              throw new Error('Pieces in hand not sorted alphabetically within same count');
-            }
-
-            // Rule 3: Same base letter, uppercase before lowercase
-            if (prevLower === currLower && prevBase.toLowerCase() === currBase.toLowerCase()) {
-              if (prevBase > currBase) {
-                throw new Error('Pieces in hand not sorted by case (uppercase first) within same letter');
-              }
-            }
-          }
-        }
-      }
-
-      /**
        * Creates a definition list for a player
-       * @param {string} style - The style name
-       * @param {Array} pieces - The pieces in hand for this player
+       * @param {string} style - The SIN style token
+       * @param {Array} pieces - The pieces in hand
        * @param {boolean} isFirstPlayer - Whether this is the first player
        * @returns {HTMLElement} The definition list
        */
@@ -706,16 +981,13 @@
 
           for (const { piece, count } of pieces) {
             const li = document.createElement('li');
-
-            // Create a span with class 'piece' for consistency with board pieces
             const pieceSpan = document.createElement('span');
             pieceSpan.className = 'piece';
 
-            // Display count prefix if > 1
             const displayText = count > 1 ? `${count}${piece}` : piece;
             pieceSpan.textContent = displayText;
 
-            // Determine piece ownership based on controlling player (not piece case)
+            // Color based on controlling player (first = uppercase/red, second = lowercase/black)
             if (isFirstPlayer) {
               pieceSpan.classList.add('uppercase');
             } else {
@@ -738,93 +1010,59 @@
       }
 
       /**
-       * Creates a board table from the piece placement field
-       * Supports 1D and 2D boards only.
-       * @param {string} piecePlacement - The piece placement field from FEEN
-       * @param {string} activePlayer - The active player's style
-       * @param {string} firstPlayerStyle - The first player's style (uppercase)
+       * Creates a board table from parsed board data
+       * @param {Object} boardData - Parsed board data from parsePiecePlacement
+       * @param {string} activeStyle - The active player's style
+       * @param {string} activePlayerSide - 'first' or 'second'
        * @returns {HTMLElement} The board table
        */
-      function createBoardTable(piecePlacement, activePlayer, firstPlayerStyle) {
-        if (!piecePlacement || typeof piecePlacement !== 'string') {
-          throw new Error('Invalid piece placement: must be a non-empty string');
-        }
-
-        // Check if this is a multi-dimensional board beyond 2D
-        if (piecePlacement.includes('//')) {
-          throw new Error('Only 1D and 2D boards are supported in this viewer');
-        }
-
-        // Parse the board rows/ranks
-        const rows = piecePlacement.split('/');
-
-        if (rows.length === 0) {
-          throw new Error('Invalid piece placement: no ranks found');
-        }
+      function createBoardTable(boardData, activeStyle, activePlayerSide) {
+        const { segments, maxWidth } = boardData;
 
         // Determine if we need to flip the board (when second player is active)
-        const shouldFlipBoard = activePlayer !== firstPlayerStyle;
+        const shouldFlipBoard = activePlayerSide === 'second';
 
-        // Create the table
         const table = document.createElement('table');
 
-        // Add caption indicating the active player
         const caption = document.createElement('caption');
-        caption.textContent = `${activePlayer}'s turn`;
+        caption.textContent = `${activeStyle}'s turn`;
         table.appendChild(caption);
 
-        // Determine maximum row width for consistent grid
-        let maxCells = 0;
-        const parsedRows = [];
+        // Prepare rows for display
+        const displayRows = shouldFlipBoard ? [...segments].reverse() : segments;
 
-        // First pass: parse all rows and determine dimensions
-        for (let i = 0; i < rows.length; i++) {
-          const parsedCells = parseRank(rows[i]);
-          parsedRows.push(parsedCells);
-          maxCells = Math.max(maxCells, parsedCells.length);
-        }
-
-        // If we need to flip the board, reverse the rows order
-        const displayRows = shouldFlipBoard ? [...parsedRows].reverse() : parsedRows;
-
-        // Second pass: create the table with consistent grid
-        for (let i = 0; i < displayRows.length; i++) {
+        for (const segment of displayRows) {
           const tr = document.createElement('tr');
-          tr.style.gridTemplateColumns = `repeat(${maxCells}, 1fr)`;
+          tr.style.gridTemplateColumns = `repeat(${maxWidth}, 1fr)`;
 
-          const cells = displayRows[i];
+          // Prepare cells for display
+          const displayCells = shouldFlipBoard ? [...segment].reverse() : segment;
 
-          // If we need to flip the board, also reverse each row
-          const displayCells = shouldFlipBoard ? [...cells].reverse() : cells;
-
-          // Add cells for this row
-          for (let j = 0; j < displayCells.length; j++) {
+          for (const cell of displayCells) {
             const td = document.createElement('td');
 
-            if (displayCells[j] !== null) {
-              // Create the piece element
+            if (cell !== null) {
               const pieceElement = document.createElement('span');
               pieceElement.className = 'piece';
 
-              // Extract base letter for case determination (after removing modifiers and terminal marker)
-              const baseLetter = displayCells[j].replace(/[+\-'^]/g, '');
+              // Parse the EPIN token to determine side
+              const parsed = parseEpin(cell);
 
-              // Add uppercase or lowercase class based on the piece's case
-              if (baseLetter === baseLetter.toUpperCase()) {
+              if (parsed.pieceSide === 'first') {
                 pieceElement.classList.add('uppercase');
               } else {
                 pieceElement.classList.add('lowercase');
               }
 
-              pieceElement.textContent = displayCells[j];
+              pieceElement.textContent = cell;
               td.appendChild(pieceElement);
             }
 
             tr.appendChild(td);
           }
 
-          // Fill remaining cells if this row is shorter than maxCells
-          for (let j = displayCells.length; j < maxCells; j++) {
+          // Pad with empty cells if needed
+          for (let j = displayCells.length; j < maxWidth; j++) {
             const td = document.createElement('td');
             tr.appendChild(td);
           }
@@ -835,72 +1073,22 @@
         return table;
       }
 
-      /**
-       * Parses a single rank/row string into an array of pieces/nulls
-       * Supports PIN-style '^' terminal marker and legacy "'".
-       * @param {string} rankStr - The rank string to parse
-       * @returns {Array} Array where each element is either a piece string or null (empty)
-       */
-      function parseRank(rankStr) {
-        const cells = [];
-        let i = 0;
+      // ========================================================================
+      // Initialization
+      // ========================================================================
 
-        while (i < rankStr.length) {
-          const char = rankStr[i];
+      const form = document.querySelector('form');
+      const main = document.querySelector('main');
 
-          // If it's a number, add that many empty cells
-          if (/[1-9]/.test(char)) {
-            // Handle multi-digit numbers
-            let numStart = i;
-            while (i < rankStr.length && /[0-9]/.test(rankStr[i])) {
-              i++;
-            }
-            const emptyCount = parseInt(rankStr.slice(numStart, i), 10);
+      // Parse initial FEEN from input field on page load
+      displayPosition(document.querySelector('input[name="feen"]').value);
 
-            for (let k = 0; k < emptyCount; k++) {
-              cells.push(null);
-            }
-
-            continue;
-          }
-
-          // Handle piece with potential modifiers and terminal marker (PIN-style)
-          let pieceStr = '';
-
-          // Check for prefix
-          if (char === '+' || char === '-') {
-            pieceStr += char;
-            i++;
-
-            if (i >= rankStr.length || !/[a-zA-Z]/.test(rankStr[i])) {
-              throw new Error(`Invalid piece notation: prefix "${char}" without piece identifier`);
-            }
-          }
-
-          // Get the piece identifier
-          if (i >= rankStr.length || !/[a-zA-Z]/.test(rankStr[i])) {
-            throw new Error(`Invalid piece placement: expected piece letter at position ${i}`);
-          }
-
-          pieceStr += rankStr[i];
-          i++;
-
-          // Check for suffixes: optional PIN terminal '^' then optional EPIN derivation "'"
-          if (i < rankStr.length && rankStr[i] === "^") {
-            pieceStr += "^";
-            i++;
-          }
-
-          if (i < rankStr.length && rankStr[i] === "'") {
-            pieceStr += "'";
-            i++;
-          }
-
-          cells.push(pieceStr);
-        }
-
-        return cells;
-      }
+      // Handle form submission
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const feenInput = form.querySelector('input[name="feen"]').value;
+        displayPosition(feenInput);
+      });
     });
   </script>
 
@@ -919,14 +1107,14 @@
     "softwareVersion": "1.0.0",
     "dateCreated": "2025-06-09",
     "creator": {
-      "@type": "Organization",
-      "name": "Sashité",
-      "url": "https://sashite.com"
+      "@type": "Person",
+      "name": "Cyril Kato",
+      "url": "https://cyril.email/"
     },
     "publisher": {
-      "@type": "Organization",
-      "name": "Sashité",
-      "url": "https://sashite.com"
+      "@type": "Person",
+      "name": "Cyril Kato",
+      "url": "https://cyril.email/"
     },
     "license": "https://opensource.org/licenses/MIT",
     "programmingLanguage": "JavaScript",
@@ -937,13 +1125,14 @@
       "priceCurrency": "USD"
     },
     "featureList": [
-      "FEEN notation parsing and validation",
-      "PIN-style piece token support with terminal markers",
+      "FEEN v1.0.0 notation parsing and validation",
+      "EPIN v1.0.0 piece token support",
+      "SIN v1.0.0 style identifier support",
       "Visual board representation",
       "Support for Chess, Shōgi, Xiangqi positions",
       "Cross-style hybrid position support",
       "Captured pieces display",
-      "Multi-dimensional board parsing (up to 2D in this viewer)",
+      "Canonical ordering validation",
       "Responsive design",
       "Real-time position updates"
     ],
@@ -988,19 +1177,17 @@
     <section class="about">
       <h2>About FEEN</h2>
       <p>
-        FEEN (Field Expression Encoding Notation) is a minimalistic, rule-agnostic textual format
-        for capturing static board positions in a canonical, compact, and game-neutral way.
+        FEEN (Field Expression Encoding Notation) is a rule-agnostic, canonical position encoding
+        for two-player, turn-based board games built on the Sashité Game Protocol.
       </p>
       <p>
         FEEN strings consist of three space-separated fields:
-        <strong>&lt;PIECE-PLACEMENT&gt;</strong> (board configuration),
+        <strong>&lt;PIECE-PLACEMENT&gt;</strong> (board configuration using EPIN tokens),
         <strong>&lt;HANDS&gt;</strong> (pieces in each player's hand), and
-        <strong>&lt;STYLE-TURN&gt;</strong> (styles and active player).
-        Piece identifiers follow PIN-style conventions, with optional state modifiers (<code>+</code>, <code>-</code>)
-        and optional terminal markers (<code>^</code>).
+        <strong>&lt;STYLE–TURN&gt;</strong> (styles and active player using SIN tokens).
       </p>
       <p>
-        Learn more about the <a href="https://sashite.dev/specs/feen/1.0.0/" rel="external">FEEN Specification</a>.
+        Learn more about the <a href="https://sashite.dev/specs/feen/1.0.0/" rel="external">FEEN v1.0.0 Specification</a>.
       </p>
     </section>
 
@@ -1026,7 +1213,7 @@
 
     <section class="legal">
       <p>
-        &copy; 2025 <a href="https://sashite.com" rel="external">Sashité</a>.
+        © 2025 <a href="https://cyril.email/" rel="external">Cyril Kato</a>.
         All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">source code</a> and
         <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
         <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
