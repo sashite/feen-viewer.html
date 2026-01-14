@@ -12,6 +12,12 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://sashite.github.io/feen-viewer.html/">
 
+  <!-- License -->
+  <link rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">
+  <meta name="dcterms.license" content="https://creativecommons.org/publicdomain/zero/1.0/">
+  <meta name="dcterms.rightsHolder" content="Cyril Kato">
+  <meta name="dcterms.rights" content="CC0 1.0 Universal (Public Domain Dedication)">
+
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="FEEN Viewer - Board Game Position Viewer">
   <meta property="og:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
@@ -1094,58 +1100,69 @@
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "FEEN Viewer",
-    "alternateName": "Field Expression Encoding Notation Viewer",
-    "description": "Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.",
-    "url": "https://sashite.github.io/feen-viewer.html/",
-    "applicationCategory": "GameApplication",
-    "operatingSystem": "Web Browser",
-    "browserRequirements": "Requires JavaScript",
-    "softwareVersion": "1.0.0",
-    "dateCreated": "2025-06-09",
-    "creator": {
-      "@type": "Person",
-      "name": "Cyril Kato",
-      "url": "https://cyril.email/"
-    },
-    "publisher": {
-      "@type": "Person",
-      "name": "Cyril Kato",
-      "url": "https://cyril.email/"
-    },
-    "license": "https://opensource.org/licenses/MIT",
-    "programmingLanguage": "JavaScript",
-    "screenshot": "https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "featureList": [
-      "FEEN v1.0.0 notation parsing and validation",
-      "EPIN v1.0.0 piece token support",
-      "SIN v1.0.0 style identifier support",
-      "Visual board representation",
-      "Support for Chess, Shōgi, Xiangqi positions",
-      "Cross-style hybrid position support",
-      "Captured pieces display",
-      "Canonical ordering validation",
-      "Responsive design",
-      "Real-time position updates"
-    ],
-    "keywords": "FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position",
-    "inLanguage": "en",
-    "isAccessibleForFree": true,
-    "mainEntity": {
-      "@type": "SoftwareApplication",
-      "name": "FEEN Position Viewer",
-      "applicationCategory": "Utility",
-      "description": "Parse and visualize board game positions in FEEN format"
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FEEN Viewer",
+      "alternateName": "Field Expression Encoding Notation Viewer",
+      "description": "Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.",
+      "url": "https://sashite.github.io/feen-viewer.html/",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web Browser",
+      "browserRequirements": "Requires JavaScript",
+      "softwareVersion": "1.0.0",
+      "dateCreated": "2025-06-09",
+      "author": {
+        "@type": "Person",
+        "name": "Cyril Kato",
+        "url": "https://cyril.email/"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "Cyril Kato",
+        "url": "https://cyril.email/"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Cyril Kato",
+        "url": "https://cyril.email/"
+      },
+      "copyrightHolder": {
+        "@type": "Person",
+        "name": "Cyril Kato",
+        "url": "https://cyril.email/"
+      },
+      "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "copyrightNotice": "CC0 1.0 Universal - Public Domain Dedication",
+      "programmingLanguage": "JavaScript",
+      "screenshot": "https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "FEEN v1.0.0 notation parsing and validation",
+        "EPIN v1.0.0 piece token support",
+        "SIN v1.0.0 style identifier support",
+        "Visual board representation",
+        "Support for Chess, Shōgi, Xiangqi positions",
+        "Cross-style hybrid position support",
+        "Captured pieces display",
+        "Canonical ordering validation",
+        "Responsive design",
+        "Real-time position updates"
+      ],
+      "keywords": "FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "mainEntity": {
+        "@type": "SoftwareApplication",
+        "name": "FEEN Position Viewer",
+        "applicationCategory": "Utility",
+        "description": "Parse and visualize board game positions in FEEN format"
+      }
     }
-  }
   </script>
 </head>
 <body>
@@ -1157,8 +1174,8 @@
         id="feen-input"
         type="text"
         name="feen"
-        placeholder="e.g. +rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c"
-        value="+rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c"
+        placeholder="e.g. -rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c"
+        value="-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c"
         aria-describedby="feen-help">
       <small id="feen-help">Enter a valid FEEN notation string to visualize the board position</small>
       <button type="submit">Load Position</button>
@@ -1195,28 +1212,25 @@
       <h2>Example FEEN Strings</h2>
       <dl>
         <dt>Chess Starting Position</dt>
-        <dd><code>+rnbq+k^bn+r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/c</code></dd>
+        <dd><code>-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c</code></dd>
 
         <dt>Shōgi Starting Position</dt>
         <dd><code>lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / S/s</code></dd>
 
         <dt>Cross-Style Game (Chess vs Makruk)</dt>
-        <dd><code>rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/+RNBQ+K^BN+R / C/m</code></dd>
+        <dd><code>rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/m</code></dd>
 
-        <dt>Irregular Board Shape</dt>
-        <dd><code>rk^r/pp/PPPP / G/g</code></dd>
-
-        <dt>1D Chess Board (size 8) Starting Position</dt>
-        <dd><code>k^+p4+PK^ / C/c</code></dd>
+        <dt>Position with captured pieces</dt>
+        <dd><code>-r1bqk^b1-r/+p+p+p+p1+p+p+p/2n2n2/4p3/2B1P3/5N2/+P+P+P+P1+P+P+P/-RNBQK^2+R 2P/p C/c</code></dd>
       </dl>
     </section>
 
     <section class="legal">
       <p>
-        © 2025 <a href="https://cyril.email/" rel="external">Cyril Kato</a>.
-        All content including <a href="https://github.com/sashite/feen-viewer.html" rel="external">source code</a> and
-        <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> released under the
-        <a href="https://opensource.org/licenses/MIT" rel="external">MIT License</a>.
+        <a href="https://github.com/sashite/feen-viewer.html" rel="external">Source code</a> and
+        <a href="https://github.com/sashite/feen-logo.svg" rel="external">logo</a> dedicated to the public domain by
+        <a href="https://cyril.email/" rel="external">Cyril Kato</a> under
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/" rel="external">CC0 1.0 Universal</a>.
       </p>
     </section>
   </footer>
