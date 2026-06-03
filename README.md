@@ -19,30 +19,30 @@ Enter a valid FEEN string and click **"Load Position"** to visualize the board.
 FEEN uses three space-separated fields:
 
 ```text
-<PIECE-PLACEMENT> <PIECES-IN-HAND> <GAMES-TURN>
+<PIECE-PLACEMENT> <HANDS> <STYLE-TURN>
 ```
 
 ### Examples
 
 ```text
 # Chess starting position
--rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c
+-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/w
 
 # Shōgi starting position
-lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / S/s
+lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / J/j
 
 # Cross-style position (Chess vs Makruk)
-rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/m
+rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/s
 
 # Position with captured pieces
-r1bq1b1r/+p+p+p+p1k^+p+p/2n2n2/4p3/4P3/5N2/+P+P+P+P1+P+P+P/-RNBQK^2+R p/B C/c
+r1bq1b1r/+p+p+p+p1k^+p+p/2n2n2/4p3/4P3/5N2/+P+P+P+P1+P+P+P/-RNBQK^2+R p/B W/w
 ```
 
 ## Features
 
 * Parse and visualize FEEN positions
 * Support for 1D and 2D boards
-* Cross-style hybrid games (e.g. Chess vs Makruk)
+* Cross-style games (e.g. Chess vs Makruk)
 * Captured pieces display ("pieces in hand")
 * Real-time position updates while editing the FEEN string
 

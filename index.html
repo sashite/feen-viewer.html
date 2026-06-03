@@ -6,7 +6,7 @@
   <title>FEEN Viewer</title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.">
+  <meta name="description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style positions.">
   <meta name="keywords" content="FEEN, Field Expression Encoding Notation, chess notation, board games, chess viewer, shogi, xiangqi, game notation, board position">
   <meta name="author" content="Cyril Kato">
   <meta name="robots" content="index, follow">
@@ -20,7 +20,7 @@
 
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="FEEN Viewer - Board Game Position Viewer">
-  <meta property="og:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta property="og:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and cross-style board game positions.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://sashite.github.io/feen-viewer.html/">
   <meta property="og:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
@@ -31,7 +31,7 @@
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FEEN Viewer - Board Game Position Viewer">
-  <meta name="twitter:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and hybrid board game positions.">
+  <meta name="twitter:description" content="Interactive web viewer for FEEN (Field Expression Encoding Notation). Visualize Chess, Shōgi, Xiangqi and cross-style board game positions.">
   <meta name="twitter:image" content="https://sashite.github.io/feen-viewer.html/favicon/web-app-manifest-512x512.png">
   <meta name="twitter:image:alt" content="FEEN Viewer Logo">
 
@@ -1105,7 +1105,7 @@
       "@type": "WebApplication",
       "name": "FEEN Viewer",
       "alternateName": "Field Expression Encoding Notation Viewer",
-      "description": "Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style hybrid positions.",
+      "description": "Interactive web viewer for FEEN (Field Expression Encoding Notation) board positions. Supports Chess, Shōgi, Xiangqi, and other abstract strategy games with cross-style positions.",
       "url": "https://sashite.github.io/feen-viewer.html/",
       "applicationCategory": "GameApplication",
       "operatingSystem": "Web Browser",
@@ -1147,7 +1147,7 @@
         "SIN v1.0.0 style identifier support",
         "Visual board representation",
         "Support for Chess, Shōgi, Xiangqi positions",
-        "Cross-style hybrid position support",
+        "Cross-style position support",
         "Captured pieces display",
         "Canonical ordering validation",
         "Responsive design",
@@ -1174,8 +1174,8 @@
         id="feen-input"
         type="text"
         name="feen"
-        placeholder="e.g. -rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c"
-        value="-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c"
+        placeholder="e.g. -rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/w"
+        value="-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/w"
         aria-describedby="feen-help">
       <small id="feen-help">Enter a valid FEEN notation string to visualize the board position</small>
       <button type="submit">Load Position</button>
@@ -1212,16 +1212,16 @@
       <h2>Example FEEN Strings</h2>
       <dl>
         <dt>Chess Starting Position</dt>
-        <dd><code>-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/c</code></dd>
+        <dd><code>-rnbqk^bn-r/+p+p+p+p+p+p+p+p/8/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/w</code></dd>
 
         <dt>Shōgi Starting Position</dt>
-        <dd><code>lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / S/s</code></dd>
+        <dd><code>lnsgk^gsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGK^GSNL / J/j</code></dd>
 
         <dt>Cross-Style Game (Chess vs Makruk)</dt>
-        <dd><code>rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / C/m</code></dd>
+        <dd><code>rnsmk^snr/8/pppppppp/8/8/8/+P+P+P+P+P+P+P+P/-RNBQK^BN-R / W/s</code></dd>
 
         <dt>Position with captured pieces</dt>
-        <dd><code>r1bq1b1r/+p+p+p+p1k^+p+p/2n2n2/4p3/4P3/5N2/+P+P+P+P1+P+P+P/-RNBQK^2+R p/B C/c</code></dd>
+        <dd><code>r1bq1b1r/+p+p+p+p1k^+p+p/2n2n2/4p3/4P3/5N2/+P+P+P+P1+P+P+P/-RNBQK^2+R p/B W/w</code></dd>
       </dl>
     </section>
 
