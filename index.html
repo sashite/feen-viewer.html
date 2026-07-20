@@ -790,6 +790,12 @@
         return 0;
       }
 
+      // Defensive bound. FEEN sets no upper limit on board size, but this viewer
+      // renders small boards; capping cells per rank and ranks per board prevents a
+      // pathological input (e.g. a huge empty-count like "1000000000") from
+      // expanding into a giant array and freezing the browser.
+      const MAX_BOARD_DIMENSION = 1024;
+
       /**
        * Parses a segment (rank/row) into placement tokens per FEEN §7.3-7.4
        * @param {string} segmentStr - The segment string to parse
@@ -809,6 +815,10 @@
               i++;
             }
             const emptyCount = parseInt(segmentStr.slice(numStart, i), 10);
+
+            if (cells.length + emptyCount > MAX_BOARD_DIMENSION) {
+              throw new Error(`Invalid piece placement: rank exceeds this viewer's limit of ${MAX_BOARD_DIMENSION} cells`);
+            }
 
             for (let k = 0; k < emptyCount; k++) {
               cells.push(null);
@@ -854,6 +864,10 @@
             throw new Error(`Invalid piece placement: "${piece}" is not a valid EPIN token`);
           }
 
+          if (cells.length + 1 > MAX_BOARD_DIMENSION) {
+            throw new Error(`Invalid piece placement: rank exceeds this viewer's limit of ${MAX_BOARD_DIMENSION} cells`);
+          }
+
           cells.push(piece);
         }
 
@@ -888,6 +902,10 @@
 
         if (segmentStrs.length === 0) {
           throw new Error('Invalid piece placement: no segments found');
+        }
+
+        if (segmentStrs.length > MAX_BOARD_DIMENSION) {
+          throw new Error(`Invalid piece placement: board exceeds this viewer's limit of ${MAX_BOARD_DIMENSION} ranks`);
         }
 
         // Parse each segment
@@ -931,13 +949,11 @@
           // Create display elements
           const firstPlayerDL = createPlayerDL(
             styleTurnData.firstPlayerStyle,
-            handsData.firstPlayerHand,
-            true
+            handsData.firstPlayerHand
           );
           const secondPlayerDL = createPlayerDL(
             styleTurnData.secondPlayerStyle,
-            handsData.secondPlayerHand,
-            false
+            handsData.secondPlayerHand
           );
           const boardTable = createBoardTable(
             boardData,
@@ -955,7 +971,15 @@
           main.appendChild(activePlayerDL);
 
         } catch (error) {
-          main.innerHTML = `<div class="error"><p>Error: ${error.message}</p></div>`;
+          // Build the error node via textContent so any user input echoed in the
+          // message (e.g. an invalid token) is never interpreted as HTML.
+          main.innerHTML = '';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error';
+          const errorP = document.createElement('p');
+          errorP.textContent = `Error: ${error.message}`;
+          errorDiv.appendChild(errorP);
+          main.appendChild(errorDiv);
         }
       }
 
@@ -963,10 +987,9 @@
        * Creates a definition list for a player
        * @param {string} style - The SIN style token
        * @param {Array} pieces - The pieces in hand
-       * @param {boolean} isFirstPlayer - Whether this is the first player
        * @returns {HTMLElement} The definition list
        */
-      function createPlayerDL(style, pieces, isFirstPlayer) {
+      function createPlayerDL(style, pieces) {
         const dl = document.createElement('dl');
 
         const styleDt = document.createElement('dt');
@@ -993,12 +1016,11 @@
             const displayText = count > 1 ? `${count}${piece}` : piece;
             pieceSpan.textContent = displayText;
 
-            // Color based on controlling player (first = uppercase/red, second = lowercase/black)
-            if (isFirstPlayer) {
-              pieceSpan.classList.add('uppercase');
-            } else {
-              pieceSpan.classList.add('lowercase');
-            }
+            // Color by the piece's own EPIN case, not by the hand holding it.
+            // Per FEEN, a piece's Side (uppercase = first, lowercase = second) is
+            // independent of which player's hand currently holds it.
+            const parsed = parseEpin(piece);
+            pieceSpan.classList.add(parsed.pieceSide === 'first' ? 'uppercase' : 'lowercase');
 
             li.appendChild(pieceSpan);
             ul.appendChild(li);
